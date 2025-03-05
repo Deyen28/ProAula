@@ -1,15 +1,18 @@
 package com.semestre5.ProAula.Model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
-@Document
-@Data
+
+
+@Setter
+@Getter
+@Document(collection = "Usuarios")
 @AllArgsConstructor
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -25,11 +28,12 @@ public class User {
 
     private String user_name;
 
-    private User_tipo user_tipo;
 
     public enum User_tipo{
         NORMAL, ADMIN, ENTIDAD
     }
+
+    private User_tipo user_tipo;
 
     private List<String> reportesId;
 

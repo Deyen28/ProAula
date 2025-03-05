@@ -1,4 +1,7 @@
 package com.semestre5.ProAula.Repository;
 
-public interface UserRepository {
+import com.semestre5.ProAula.Model.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface UserRepository extends MongoRepository <User, String> {
 }
