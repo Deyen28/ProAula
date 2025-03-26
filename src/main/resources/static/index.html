@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="sp" xmlns:th="http://www.thymeleaf.org" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="indexStyles.css">
+
+    <title>Pagina principal</title>
+</head>
+
+<body class="hero-section">
+    <!---- inicio navbar---->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand me-auto" href="/">PRGA</a>
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar"
+                aria-labelledby="offcanvasNavbarLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+
+                    <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
+                        <li class="nav-item">
+                            <a class="nav-link active mx-lg-2" aria-current="page" href="/">Inicio</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/reportes">Reportes</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="#footer">Contactos</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <a class="Registro-button" href="/registerView" role="button">Registrarse </a>
+            <a  class="login-button mx-lg-2" href="/LoginView" role="button">Iniciar sesion</a>
+
+            <button class="navbar-toggler pe-0" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+    <!---- fin navbar---->
+
+    <!---caruusel-->
+    <div id="carouselExample" class="carousel slide" data-bs-ride="carousel">
+        <!-- Indicadores -->
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+
+        <!-- Slides -->
+        <div class="carousel-inner">
+            <div class="carousel-item active" data-bs-interval="5000">
+                <img src="../imagenes/tortuga.jpeg" class="d-block w-100" alt="Imagen 1">
+            </div>
+            <div class="carousel-item" data-bs-interval="5000">
+                <img src="../imagenes/medio-ambiente.jpg" class="d-block w-100" alt="Imagen 2">
+            </div>
+            <div class="carousel-item" data-bs-interval="5000">
+                <img src="../imagenes/ejemplo.jpeg" class="d-block w-100" alt="Imagen 3">
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+    <!---fin del carrusel-->
+
+    <!----Cartd presentacion-->
+    <div class="contairner mt-5 d-none d-md-block">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">¿Que es PRGA?</h5>
+                        <p class="card-text">El PRGA (Plan Regional de Gestión Ambiental) es una estrategia
+                            diseñada para abordar los problemas ambientales a nivel regional, teniendo en cuenta las
+                            particularidades de cada zona. En Colombia, se trata de una herramienta de planificación que
+                            integra políticas ambientales en las decisiones locales, con el fin de garantizar el
+                            desarrollo
+                            sostenible de los recursos naturales y reducir los impactos negativos en el medio ambiente.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">¿Para qué fue creado el PRGA</h5>
+                        <p class="card-text">El PRGA fue creado con el objetivo de coordinar y ejecutar acciones que
+                            mejoren
+                            la gestión ambiental en los territorios regionales.Su propósito es integrar las necesidades
+                            locales con las políticas ambientales nacionales,
+                            fomentando un uso eficiente y responsable de los recursos naturales, la protección de la
+                            biodiversidad y la mitigación de la contaminación. También busca fortalecer la capacidad de
+                            las autoridades
+                            locales para prevenir y enfrentar los problemas ambientales.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">¿Qué impacto positivo tiene el PRGA?</h5>
+                        <p class="card-text">El PRGA tiene un impacto positivo significativo en la protección y
+                            conservación del
+                            medio ambiente a nivel regional. Entre sus beneficios se encuentran la reducción de la
+                            contaminación,
+                            la mejora de la gestión de residuos, la protección de ecosistemas y la promoción del
+                            desarrollo sostenible.
+                            Además, involucra a la comunidad, las autoridades locales y las empresas en la toma de
+                            decisiones ambientales, lo que contribuye a una mayor conciencia y
+                            responsabilidad social hacia el medio ambiente.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!---fin card de presetancion-->
+
+
+    <!---Inicio card de Informacion-->
+    <div class="card mb-3 border-0">
+        <div class="row g-0">
+            <div class="col-md-7">
+                <div class="card-body h-100 d-flex flex-column justify-content-center">
+                    <h5 class="card-title">Cartagena de Indias</h5>
+                    <p class="card-text">Cartagena es una ciudad portuaria en la costa caribeña de Colombia.
+                        Junto al mar, se encuentra la Ciudad Vieja amurallada, que se fundó en el siglo XVI,
+                        con plazas, calles de adoquines y edificios coloniales coloridos. Con un clima tropical,
+                        la ciudad también es un destino popular por sus playas. Se puede llegar en bote a la Isla de Barú,
+                        con playas de arena blanca y palmeras, y a las Islas del Rosario, famosas por sus arrecifes de coral.</p>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="map-container">
+                    <iframe
+                            src="https://maps.google.com/maps?q=Cartagena&t=&z=13&ie=UTF8&iwloc=&output=embed"
+                            width="100%"
+                            height="400"
+                            style="border:0;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-0">
+
+            <div class="col-md-5">
+                <div class="map-container">
+                    <img src="/imagenes/tortuga.jpeg" class="img-fluid rounded-start" alt="...">
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card-body h-100 d-flex flex-column justify-content-center">
+                    <h5 class="card-title">El impacto del plástico en la vida marina</h5>
+                    <p class="card-text">Cada año, miles de tortugas marinas quedan atrapadas en redes y plásticos desechados en el océano,
+                        como esta en la imagen. Estas trampas invisibles no solo restringen su movimiento, sino que también amenazan su vida.
+                        Actuar ahora es crucial: reduzcamos el uso de plásticos, reciclemos correctamente y apoyemos iniciativas que limpian nuestros mares.
+                        El futuro de estas especies depende de nuestras acciones hoy.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="continer mt-5">
+            <div class="card mb-3 border-0">
+                <div class="row g-0">
+                    <div class="col-md-7">
+                        <div class="card-body">
+                            <h5 class="card-title">Unidos por un océano limpio</h5>
+                            <p class="card-text">La contaminación de las playas y océanos afecta a los ecosistemas y a las futuras generaciones.
+                                Personas comprometidas, como las que ves en la imagen, están marcando la diferencia al recoger toneladas de desechos plásticos.
+                                Tú también puedes unirte al cambio: participa en jornadas de limpieza,
+                                reduce el uso de plásticos desechables y apoya proyectos ambientales.
+                                Cada acción cuenta para proteger nuestros mares y la vida que depende de ellos.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <img src="../imagenes/basurra2.jpg" class="img-fluid rounded-start" alt="...">
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!---Inicio card de Informacion-->
+
+            <!---Footer-->
+            <footer class="footer" id="footer">
+                <div class="container">
+                    <div class="row">
+                        <div class="footer-col">
+                            <h4>company</h4>
+                            <ul>
+                                <li><a href="#">about us</a></li>
+                                <li><a href="#">our services</a></li>
+                                <li><a href="#">privacy policy</a></li>
+                                <li><a href="#">affiliate program</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-col">
+                            <h4>get help</h4>
+                            <ul>
+                                <li><a href="#">FAQ</a></li>
+                                <li><a href="#">shipping</a></li>
+                                <li><a href="#">returns</a></li>
+                                <li><a href="#">order status</a></li>
+                                <li><a href="#">payment options</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-col">
+                            <h4>follow us</h4>
+                            <div class="social-links">
+                                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#"><i class="fab fa-twitter"></i></a>
+                                <a href="#"><i class="fab fa-instagram"></i></a>
+                                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>      <!---Fin del Footer-->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var myCarousel = new bootstrap.Carousel(document.getElementById('carouselExample'), {
+                interval: 5000,  // Cambia de imagen cada 5 segundos
+                wrap: true,      // Continúa desde el principio cuando llega al final
+                ride: 'carousel' // Inicia automáticamente
+            });
+        });
+    </script>
+
+</body>
+<style th:inline="css">
+    .map-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.map-container iframe {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/*navbar*/
+.navbar {
+    background-color: white;
+    height: 80px;
+    margin: 20px;
+    border-radius: 16px;
+    padding: 0.5rem;
+}
+
+.navbar-brand {
+    font-size: 24px;
+    color: #009970;
+    font-weight: 500;
+    transition: 0.3s color;
+}
+
+.Registro-button {
+    background-color: #009970;
+    color: white;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: 0.3s;
+    cursor: default;
+
+
+}
+
+.Registro-button:hover {
+    background-color: #00b383;
+}
+
+.login-button {
+    background-color: #009970;
+    color: white;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: 0.3s;
+    cursor: default;
+
+}
+
+.login-button:hover {
+    background-color: #00b383;
+}
+
+.navbar-toggler {
+    border: none;
+    font-size: 1.25rem;
+}
+
+.navbar-toggler:focus,
+.btn-close:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.nav-link {
+    color: #666777;
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: black;
+}
+
+@media (min-width: 991px) {
+    .nav-link::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0%;
+        height: 2px;
+        background-color: #009970;
+        visibility: hidden;
+        transition: 0.3s ease-in-out;
+    }
+
+    .nav-link:hover::before,
+    .nav-link.active::before {
+        width: 100%;
+        visibility: visible;
+    }
+}
+
+/*Navbar fin*/
+
+/*carousel */
+.hero-section {
+    background: url(https://cdn.pixabay.com/photo/2020/03/16/16/51/colombia-4937610_1280.jpg);
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+}
+
+.hero-section::before {
+    background-color: rgba(0, 0, 0, 0.6);
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+
+.carousel {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-top: 300px;
+}
+
+.carousel-inner img {
+    width: 100%;
+    /* La imagen ocupa todo el ancho del contenedor */
+    height: 300px;
+    /* Define la altura fija */
+    object-fit: cover;
+    /* La imagen cubrirá todo el área sin distorsionarse */
+    max-width: 100%;
+    /* Evita que la imagen se salga del contenedor */
+    max-height: 500px;
+    /* Limita la altura máxima */
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    top: 75%;
+    transform: translateY(-50%);
+    height: auto;
+    width: 5%;
+    /* Ajusta el ancho si necesitas que los botones sean más visibles */
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 100%;
+    /* Asegura que los iconos se ajusten correctamente */
+}
+
+/*carousel Fin */
+
+/*card */
+.card-body {
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.2);
+    cursor: default;
+    transition: all 400ms ease;
+}
+
+.card-body:hover {
+    box-shadow: 5px 5px 20 px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3%);
+}
+
+.card img {
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.2);
+    cursor: default;
+    transition: all 400ms ease;
+
+}
+
+
+.card img:hover {
+    box-shadow: 5px 5px 20 px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3%);
+}
+
+
+    /* Estilos para todas las imágenes en las cards */
+.card .img-fluid {
+    height: 400px;
+    width: 100%;
+    object-fit: cover;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+  /* Asegura que las filas de las cards tengan la misma altura */
+.card .row {
+    min-height: 400px;
+}
+
+/* Centra el contenido verticalmente */
+.col-md-7, .col-md-5 {
+    display: flex;
+    align-items: center;
+}
+
+/* Estilo para el contenido de texto */
+.card-body {
+    height: 100%;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+/*card Fin*/
+
+
+/*Foooter*/
+.container {
+    max-width: 1170px;
+    margin: auto;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+ul {
+    list-style: none;
+}
+
+.footer {
+    background-color: #24262b;
+    padding: 70px 0;
+}
+
+.footer-col {
+    width: 25%;
+    padding: 0 15px;
+}
+
+.footer-col h4 {
+    font-size: 18px;
+    color: #ffffff;
+    text-transform: capitalize;
+    margin-bottom: 35px;
+    font-weight: 500;
+    position: relative;
+}
+
+.footer-col h4::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    background-color: #e91e63;
+    height: 2px;
+    box-sizing: border-box;
+    width: 50px;
+}
+
+.footer-col ul li:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.footer-col ul li a {
+    font-size: 16px;
+    text-transform: capitalize;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 300;
+    color: #bbbbbb;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.footer-col ul li a:hover {
+    color: #ffffff;
+    padding-left: 8px;
+}
+
+.footer-col .social-links a {
+    display: inline-block;
+    height: 40px;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 0 10px 10px 0;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    color: #ffffff;
+    transition: all 0.5s ease;
+}
+
+.footer-col .social-links a:hover {
+    color: #24262b;
+    background-color: #ffffff;
+}
+
+@media(max-width: 767px) {
+    .footer-col {
+        width: 50%;
+        margin-bottom: 30px;
+    }
+}
+
+@media(max-width: 574px) {
+    .footer-col {
+        width: 100%;
+    }
+}
+
+/*Foooter Fin*/
+</style>
+
+</html>

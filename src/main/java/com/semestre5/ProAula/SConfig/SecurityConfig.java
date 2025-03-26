@@ -1,5 +1,6 @@
 package com.semestre5.ProAula.SConfig;
 
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,14 +17,19 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return  http.authorizeHttpRequests( auth ->{
-            auth.requestMatchers(HttpMethod.POST,"/index/user/registrar").permitAll();
-            auth.anyRequest().authenticated();
-        }).build();
+        return  http
+                .csrf(csrf-> csrf
+                        .disable())
+                .authorizeHttpRequests(authRequest -> authRequest
+                        .requestMatchers("/", "/index.html", "/user/**", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
+
 }
