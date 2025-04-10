@@ -2,12 +2,15 @@ package com.semestre5.ProAula.Model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(collection = "Barrios")
 
 public class Barrios {
     @Id
     private String id;
+
+    @Field("nombre_barrio")
     private String nombre;
 
     public Barrios() {

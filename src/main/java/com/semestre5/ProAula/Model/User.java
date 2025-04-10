@@ -1,6 +1,7 @@
 package com.semestre5.ProAula.Model;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
 
@@ -12,6 +13,8 @@ public class User {
     private String id;
     private String contrasena;
     private String direccion;
+
+    @Indexed(unique = true)
     private String email;
     private String nombre;
     private String user_name;
@@ -23,13 +26,11 @@ public class User {
 
     private UserTipo userTipo;
 
-    private List<ObjectId> reportesIds;
-    private List<ObjectId> informesIds;
 
     public User() {
     }
 
-    public User(String id, String contrasena, String direccion, String email, String nombre, String user_name, UserTipo userTipo, List<ObjectId> reportesIds, List<ObjectId> informesIds) {
+    public User(String id, String contrasena, String direccion, String email, String nombre, String user_name, UserTipo userTipo) {
         this.id = id;
         this.contrasena = contrasena;
         this.direccion = direccion;
@@ -37,8 +38,7 @@ public class User {
         this.nombre = nombre;
         this.user_name = user_name;
         this.userTipo = userTipo;
-        this.reportesIds = reportesIds;
-        this.informesIds = informesIds;
+
     }
 
     public UserTipo getUserTipo() {
@@ -47,22 +47,6 @@ public class User {
 
     public void setUserTipo(UserTipo userTipo) {
         this.userTipo = userTipo;
-    }
-
-    public List<ObjectId> getReportesIds() {
-        return reportesIds;
-    }
-
-    public void setReportesIds(List<ObjectId> reportesIds) {
-        this.reportesIds = reportesIds;
-    }
-
-    public List<ObjectId> getInformesIds() {
-        return informesIds;
-    }
-
-    public void setInformesIds(List<ObjectId> informesIds) {
-        this.informesIds = informesIds;
     }
 
     public String getEmail() {

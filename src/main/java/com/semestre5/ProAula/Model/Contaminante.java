@@ -3,6 +3,7 @@ package com.semestre5.ProAula.Model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document (collection = "Contaminantes")
 
@@ -10,6 +11,8 @@ public class Contaminante {
 
     @Id
     private String id;
+
+    @Field("nombre_contaminante")
     private String nombre;
 
     public Contaminante() {

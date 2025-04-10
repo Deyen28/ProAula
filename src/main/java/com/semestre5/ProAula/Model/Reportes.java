@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -15,92 +17,40 @@ public class Reportes {
     private String id;
     private String direccion;
     private String descripcion;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDate fechaReporte;
     private String evidencia; // URL o base64
 
     // Referencia al usuario
-    @DBRef
-    private User usuario;
+    @Field("user_id")
+    private String userId;
 
-    private BarrioInfo barrio;
+    @Field("barrio_id")
+    private String barrioId;
 
-    private ContaminanteInfo contaminante;
+    @Field("contaminante_id")
+    private String contaminanteId;
 
     public enum EstadoReporte {
         PENDIENTE, EN_PROCESO, RESUELTO
     }
+
     private EstadoReporte estado;
 
-    public static class BarrioInfo {
-        private String id;
-        private String nombre;
-
-        public BarrioInfo() {
-        }
-
-        public BarrioInfo(String id, String nombre) {
-            this.id = id;
-            this.nombre = nombre;
-        }
-
-        public String getNombre() {
-            return nombre;
-        }
-
-        public void setNombre(String nombre) {
-            this.nombre = nombre;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-    }
-
-    public static class ContaminanteInfo {
-        private String id;
-        private String nombre;
-
-        public ContaminanteInfo() {
-        }
-
-        public ContaminanteInfo(String id, String nombre) {
-            this.id = id;
-            this.nombre = nombre;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getNombre() {
-            return nombre;
-        }
-
-        public void setNombre(String nombre) {
-            this.nombre = nombre;
-        }
-    }
 
     public Reportes() {
     }
 
-    public Reportes(String id, String direccion, String descripcion, LocalDate fechaReporte, String evidencia, User usuario, BarrioInfo barrio, ContaminanteInfo contaminante, EstadoReporte estado) {
+    public Reportes(String id, String direccion, String descripcion, LocalDate fechaReporte, String evidencia, String userId, String barrioId, String contaminanteId, EstadoReporte estado) {
         this.id = id;
         this.direccion = direccion;
         this.descripcion = descripcion;
         this.fechaReporte = fechaReporte;
         this.evidencia = evidencia;
-        this.usuario = usuario;
-        this.barrio = barrio;
-        this.contaminante = contaminante;
+        this.userId = userId;
+        this.barrioId = barrioId;
+        this.contaminanteId = contaminanteId;
         this.estado = estado;
     }
 
@@ -144,28 +94,28 @@ public class Reportes {
         this.evidencia = evidencia;
     }
 
-    public User getUsuario() {
-        return usuario;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUsuario(User usuario) {
-        this.usuario = usuario;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public BarrioInfo getBarrio() {
-        return barrio;
+    public String getBarrioId() {
+        return barrioId;
     }
 
-    public void setBarrio(BarrioInfo barrio) {
-        this.barrio = barrio;
+    public void setBarrioId(String barrioId) {
+        this.barrioId = barrioId;
     }
 
-    public ContaminanteInfo getContaminante() {
-        return contaminante;
+    public String getContaminanteId() {
+        return contaminanteId;
     }
 
-    public void setContaminante(ContaminanteInfo contaminante) {
-        this.contaminante = contaminante;
+    public void setContaminanteId(String contaminanteId) {
+        this.contaminanteId = contaminanteId;
     }
 
     public EstadoReporte getEstado() {
