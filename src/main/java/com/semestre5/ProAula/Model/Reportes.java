@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Document(collection = "Reportes")
 
@@ -29,8 +30,8 @@ public class Reportes {
     @Field("barrio_id")
     private String barrioId;
 
-    @Field("contaminante_id")
-    private String contaminanteId;
+    @Field("contaminantes_ids")
+    private List<String> contaminantesIds;
 
     public enum EstadoReporte {
         PENDIENTE, EN_PROCESO, RESUELTO
@@ -42,7 +43,7 @@ public class Reportes {
     public Reportes() {
     }
 
-    public Reportes(String id, String direccion, String descripcion, LocalDate fechaReporte, String evidencia, String userId, String barrioId, String contaminanteId, EstadoReporte estado) {
+    public Reportes(String id, String direccion, String descripcion, LocalDate fechaReporte, String evidencia, String userId, String barrioId, List<String> contaminantesIds, EstadoReporte estado) {
         this.id = id;
         this.direccion = direccion;
         this.descripcion = descripcion;
@@ -50,7 +51,7 @@ public class Reportes {
         this.evidencia = evidencia;
         this.userId = userId;
         this.barrioId = barrioId;
-        this.contaminanteId = contaminanteId;
+        this.contaminantesIds = contaminantesIds;
         this.estado = estado;
     }
 
@@ -110,12 +111,12 @@ public class Reportes {
         this.barrioId = barrioId;
     }
 
-    public String getContaminanteId() {
-        return contaminanteId;
+    public List<String> getContaminantesIds() {
+        return contaminantesIds;
     }
 
-    public void setContaminanteId(String contaminanteId) {
-        this.contaminanteId = contaminanteId;
+    public void setContaminantesIds(List<String> contaminantesIds) {
+        this.contaminantesIds = contaminantesIds;
     }
 
     public EstadoReporte getEstado() {

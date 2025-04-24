@@ -28,23 +28,19 @@ public class InformeAlerta {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDate fechaCreacion;
 
-    @Field("barrio_id")
-    private String barrioId;
-
-    @Field("contaminantes_ids")
-    private List<String> contaminantesIds;
+    @Field("reportes_ids")
+    private List<String> reportesIds;
 
     public InformeAlerta() {
     }
 
-    public InformeAlerta(String id, String descripcion, EstadoInforme estado, ValoracionRiesgo valoracion, LocalDate fechaCreacion, String barrioId, List<String> contaminantesIds) {
+    public InformeAlerta(String id, String descripcion, EstadoInforme estado, ValoracionRiesgo valoracion, LocalDate fechaCreacion, List<String> reportesIds) {
         this.id = id;
         this.descripcion = descripcion;
         this.estado = estado;
         this.valoracion = valoracion;
         this.fechaCreacion = fechaCreacion;
-        this.barrioId = barrioId;
-        this.contaminantesIds = contaminantesIds;
+        this.reportesIds = reportesIds;
     }
 
     public String getId() {
@@ -87,20 +83,14 @@ public class InformeAlerta {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public String getBarrioId() {
-        return barrioId;
+
+    public List<String> getReportesIds() {
+        return reportesIds;
     }
 
-    public void setBarrioId(String barrioId) {
-        this.barrioId = barrioId;
-    }
-
-    public List<String> getContaminantesIds() {
-        return contaminantesIds;
-    }
-
-    public void setContaminantesIds(List<String> contaminantesIds) {
-        this.contaminantesIds = contaminantesIds;
+    public void setReportesIds(List<String> reportesIds) {
+        this.reportesIds = reportesIds;
     }
 }
+
 

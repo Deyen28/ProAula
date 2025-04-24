@@ -22,9 +22,6 @@ public class UserServices {
 
     public User guardar_user(User usuario) {
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
-        if (usuario.getReportesIds() == null) {
-            usuario.setReportesIds(new ArrayList<>());
-        }
         return userRepository.save(usuario);
     }
 }
