@@ -33,6 +33,7 @@ public class Reportes {
     @Field("contaminantes_ids")
     private List<String> contaminantesIds;
 
+
     public enum EstadoReporte {
         PENDIENTE, EN_PROCESO, RESUELTO
     }
