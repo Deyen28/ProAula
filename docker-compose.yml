@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  proaula-app:
+    build: .
+    container_name: proaula_app_container
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/proAulaMongo
+    depends_on:
+      - mongo
+    networks:
+      - proaula-network # Conecta este servicio a nuestra red personalizada
+  mongo:
+    image: mongo:latest # Usa la imagen oficial de MongoDB más reciente desde Docker Hub
+    container_name: proaula_mongo_container # Nombre opcional para el contenedor
+    ports:
+      - "27017:27017" # Mapea el puerto 27017 del host al 27017 del contenedor (útil para herramientas externas)
+    volumes:
+      - mongo-data:/data/db # Persiste los datos de MongoDB en un volumen llamado 'mongo-data'
+    networks:
+      - proaula-network # Conecta este servicio a nuestra red personalizada
+volumes:
+  mongo-data: # Este volumen almacenará los datos de MongoDB
+networks:
+  proaula-network:
+    driver: bridge # Usa el driver de red por defecto 'bridge'

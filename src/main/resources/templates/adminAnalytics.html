@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <title> Admin Dashboard</title>
+    <style>
+        :root {
+          --main-bg-color: #f0f2f5;
+          --main-text-color: #007bff; /* Azul para Admin */
+          --second-text-color: #6c757d;
+          --sidebar-bg: #ffffff;
+          --sidebar-border: #dee2e6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; /* Prevenir scroll horizontal en el body */
+        }
+        #wrapper {
+          display: flex; /* Necesario para el layout sidebar + content */
+          background-color: var(--main-bg-color);
+        }
+        #sidebar-wrapper {
+          min-height: 100vh;
+          width: 15rem; /* Ancho fijo del sidebar */
+          margin-left: -15rem; /* Oculto por defecto en pantallas pequeñas */
+          -webkit-transition: margin .25s ease-out;
+          -moz-transition: margin .25s ease-out;
+          -o-transition: margin .25s ease-out;
+          transition: margin .25s ease-out;
+          background-color: var(--sidebar-bg);
+          border-right: 1px solid var(--sidebar-border);
+        }
+        #wrapper.toggled #sidebar-wrapper {
+          margin-left: 0;
+        }
+        #sidebar-wrapper .sidebar-heading {
+          padding: 0.875rem 1.25rem;
+          font-size: 1.2rem;
+          color: var(--main-text-color);
+          border-bottom: 1px solid var(--sidebar-border);
+        }
+        #sidebar-wrapper .list-group {
+          width: 15rem;
+        }
+        #page-content-wrapper {
+          flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
+          min-width: 0; /* Necesario para que flex-grow funcione correctamente */
+          padding-top: 0;
+          display: flex; /* Usar flex para que el contenido interno pueda crecer */
+          flex-direction: column; /* Apilar navbar y contenido principal verticalmente */
+          height: 100vh; /* Ocupar toda la altura de la ventana */
+          overflow-y: hidden; /* Prevenir scroll en este contenedor, el scroll estará en el contenido si es necesario */
+        }
+        #menu-toggle {
+          cursor: pointer;
+          color: var(--main-text-color);
+        }
+        .list-group-item {
+          border: none;
+          padding: 15px 30px;
+          color: var(--second-text-color);
+          font-weight: 500;
+        }
+        .list-group-item.active {
+          background-color: var(--main-text-color);
+          color: white;
+          font-weight: bold;
+          border-left: 4px solid darken(var(--main-text-color), 10%);
+        }
+        .list-group-item:hover:not(.active) {
+            background-color: #e9ecef;
+            color: var(--main-text-color);
+        }
+        .navbar-top-admin { /* Estilo para la navbar superior */
+            flex-shrink: 0; /* Evita que la navbar se encoja */
+        }
+        .content-container-admin { /* Contenedor para el contenido principal (iframe) */
+            flex-grow: 1; /* Ocupa el espacio restante */
+            overflow-y: auto; /* Scroll si el contenido es más grande */
+            padding: 1.5rem; /* Espaciado interno */
+        }
+
+        /* Estilos específicos para el iframe de Power BI */
+        .powerbi-iframe-wrapper {
+            width: 100%;
+            height: 100%; /* Ocupará el 100% de la altura de .card-body-fill */
+            display: flex; /* Para centrar el iframe si es más pequeño, o para que ocupe todo */
+            flex-direction: column;
+        }
+        .powerbi-iframe-wrapper iframe {
+            flex-grow: 1; /* El iframe ocupa todo el espacio disponible en el wrapper */
+            width: 100%;
+            height: 100%; /* Ocupa toda la altura del wrapper */
+            border: none; /* Sin bordes feos */
+        }
+        .card-body-fill { /* Para que el card-body ocupe la altura disponible */
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 0; /* Quitar padding si el iframe debe ir hasta los bordes del card */
+        }
+         .card-fill { /* Para que la card ocupe la altura disponible */
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            height: calc(100% - 0rem); /* Ajusta si tienes márgenes/paddings en el contenedor padre */
+        }
+
+
+        @media (min-width: 768px) {
+          #sidebar-wrapper {
+            margin-left: 0;
+          }
+          #page-content-wrapper {
+            /* min-width: 0; */ /* Ya está arriba */
+            /* width: 100%; */ /* Ya está arriba */
+          }
+          #wrapper.toggled #sidebar-wrapper {
+            margin-left: -15rem;
+          }
+        }
+    </style>
+</head>
+
+<body>
+<div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-white" id="sidebar-wrapper">
+        <div class="sidebar-heading text-center py-4 primary-text fs-4 fw-bold text-uppercase border-bottom">PRGA
+        </div>
+        <div class="list-group list-group-flush my-3">
+            <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-transparent second-text fw-bold "><i
+                    class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+            <a href="/admin/profile" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-project-diagram me-2"></i>Mi perfil</a>
+            <a href="/admin/analytics" class="list-group-item list-group-item-action bg-transparent second-text fw-bold active"><i
+                    class="fas fa-chart-line me-2"></i>Analytics</a>
+            <a href="/admin/informes" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-chart-line me-2"></i>Informe-Aleta</a>
+            <a href="/admin/reportes" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-paperclip me-2"></i>Reports</a>
+            <a class="list-group-item list-group-item-action bg-transparent text-danger fw-bold" href="#" onclick="logout(event)"><i
+                    class="fas fa-power-off me-2"></i>Logout</a>
+            <form id="logout-form" action="/logout" method="post" style="display: none;">
+            </form>
+        </div>
+    </div>
+    <!-- Fin Sidebar -->
+
+    <!-- ADmi -->
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-light bg-transparent py-4 px-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-align-left primary-text fs-4 me-3" id="menu-toggle"></i>
+                <h2 class="fs-2 m-0">INFORMACION Admin</h2>
+            </div>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle second-text fw-bold" href="#" id="navbarDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-2"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/admidashboar/Perfiladmi/Profile.html">Profile</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- FIN ADmi -->
+
+        <!-- Carta de informacion -->
+        <div class="content-container-admin">
+            <div class="card shadow-sm card-fill">
+                <div class="card-header">
+                    <h5 class="mb-0">Dashboard Interactivo de Power BI</h5>
+                </div>
+                <div class="card-body card-body-fill">
+                    <div class="powerbi-iframe-wrapper">
+                        <iframe title="Analíticas PRGA Power BI"
+                                th:src="${powerBiEmbedUrl}"
+                                allowFullScreen="true">
+                            Tu navegador no soporta iframes. Por favor, accede al dashboard
+                            <a th:href="${powerBiEmbedUrl}" target="_blank">directamente aquí</a>.
+                        </iframe>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <a th:href="${powerBiEmbedUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-external-link-alt me-1"></i>Abrir en Power BI (Nueva Pestaña)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--- Footer-->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="footer-col">
+                <h4>company</h4>
+                <ul>
+                    <li><a href="#">about us</a></li>
+                    <li><a href="#">our services</a></li>
+                    <li><a href="#">privacy policy</a></li>
+                    <li><a href="#">affiliate program</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>get help</h4>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">shipping</a></li>
+                    <li><a href="#">returns</a></li>
+                    <li><a href="#">order status</a></li>
+                    <li><a href="#">payment options</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>online shop</h4>
+                <ul>
+                    <li><a href="#">watch</a></li>
+                    <li><a href="#">bag</a></li>
+                    <li><a href="#">shoes</a></li>
+                    <li><a href="#">dress</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>follow us</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!---Fin del Footer-->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<script>
+    var el = document.getElementById("wrapper");
+    var toggleButton = document.getElementById("menu-toggle");
+
+    toggleButton.onclick = function () {
+        el.classList.toggle("toggled");
+    };
+
+    function logout(event) {
+        event.preventDefault();
+        document.getElementById('logout-form').submit();
+    }
+
+
+</script>
+
+</body>
+<style th:inline="css">
+
+    :root {
+      --main-bg-color: #009d63;
+      --main-text-color: #009d63;
+      --second-text-color: #bbbec5;
+      --second-bg-color: #c1efde;
+    }
+
+    .primary-text {
+      color: var(--main-text-color);
+    }
+
+    .second-text {
+      color: var(--second-text-color);
+    }
+
+    .primary-bg {
+      background-color: var(--main-bg-color);
+    }
+
+    .secondary-bg {
+      background-color: var(--second-bg-color);
+    }
+
+    .rounded-full {
+      border-radius: 100%;
+    }
+
+    #wrapper {
+      overflow-x: hidden;
+      background-image: linear-gradient(
+        to right,
+        #baf3d7,
+        #c2f5de,
+        #cbf7e4,
+        #d4f8ea,
+        #ddfaef
+      );
+    }
+
+    #sidebar-wrapper {
+      min-height: 100vh;
+      margin-left: -15rem;
+      -webkit-transition: margin 0.25s ease-out;
+      -moz-transition: margin 0.25s ease-out;
+      -o-transition: margin 0.25s ease-out;
+      transition: margin 0.25s ease-out;
+    }
+
+    #sidebar-wrapper .sidebar-heading {
+      padding: 0.875rem 1.25rem;
+      font-size: 1.2rem;
+    }
+
+    #sidebar-wrapper .list-group {
+      width: 15rem;
+    }
+
+    #page-content-wrapper {
+      min-width: 100vw;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+      margin-left: 0;
+    }
+
+    #menu-toggle {
+      cursor: pointer;
+    }
+
+    .list-group-item {
+      border: none;
+      padding: 20px 30px;
+    }
+
+    .list-group-item.active {
+      background-color: transparent;
+      color: var(--main-text-color);
+      font-weight: bold;
+      border: none;
+    }
+
+    @media (min-width: 768px) {
+      #sidebar-wrapper {
+        margin-left: 0;
+      }
+
+      #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+      }
+
+      #wrapper.toggled #sidebar-wrapper {
+        margin-left: -15rem;
+      }
+    }
+
+
+    /*Foooter*/
+    .container {
+      max-width: 1170px;
+      margin: auto;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    .footer {
+      background-color: #24262b;
+      padding: 70px 0;
+    }
+
+    .footer-col {
+      width: 25%;
+      padding: 0 15px;
+    }
+
+    .footer-col h4 {
+      font-size: 18px;
+      color: #ffffff;
+      text-transform: capitalize;
+      margin-bottom: 35px;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .footer-col h4::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -10px;
+      background-color: #e91e63;
+      height: 2px;
+      box-sizing: border-box;
+      width: 50px;
+    }
+
+    .footer-col ul li:not(:last-child) {
+      margin-bottom: 10px;
+    }
+
+    .footer-col ul li a {
+      font-size: 16px;
+      text-transform: capitalize;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 300;
+      color: #bbbbbb;
+      display: block;
+      transition: all 0.3s ease;
+    }
+
+    .footer-col ul li a:hover {
+      color: #ffffff;
+      padding-left: 8px;
+    }
+
+    .footer-col .social-links a {
+      display: inline-block;
+      height: 40px;
+      width: 40px;
+      background-color: rgba(255, 255, 255, 0.2);
+      margin: 0 10px 10px 0;
+      text-align: center;
+      line-height: 40px;
+      border-radius: 50%;
+      color: #ffffff;
+      transition: all 0.5s ease;
+    }
+
+    .footer-col .social-links a:hover {
+      color: #24262b;
+      background-color: #ffffff;
+    }
+
+    @media(max-width: 767px) {
+      .footer-col {
+          width: 50%;
+          margin-bottom: 30px;
+      }
+    }
+
+    @media(max-width: 574px) {
+      .footer-col {
+          width: 100%;
+      }
+    }
+
+    /*Foooter Fin*/
+</style>
+
+
+</html>

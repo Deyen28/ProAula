@@ -1,37 +1,55 @@
 package com.semestre5.ProAula.Controller;
 
+import com.semestre5.ProAula.Services.StorageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Controller
 public class FileController {
 
-    private final String UPLOAD_DIR = "uploads/";
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping("/uploads/{filename:.+}")
+    @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get(UPLOAD_DIR).resolve(filename).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
 
-            if (resource.exists() && resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                        .body(resource);
-            } else {
-                throw new RuntimeException("No se pudo leer el archivo: " + filename);
+            Resource resource = storageService.loadAsResource(filename);
+
+            String contentType = null;
+            try {
+                Path filePath = resource.getFile().toPath(); // Obtiene el Path desde el Resource
+                contentType = Files.probeContentType(filePath);
+            } catch (IOException e) {
+                System.err.println("No se pudo determinar el tipo de contenido para: " + filename + " - " + e.getMessage());
             }
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Error al cargar el archivo: " + filename, e);
+
+            // Si no se pudo determinar, usar un tipo genérico (o puedes decidir no servirlo)
+            if (contentType == null) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE; // Tipo genérico para descarga
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+
+        } catch (RuntimeException e) {
+
+            System.err.println("Error al servir archivo: " + e.getMessage());
+            return ResponseEntity.notFound().build();
         }
     }
 }

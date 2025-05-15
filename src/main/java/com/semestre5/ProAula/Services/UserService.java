@@ -5,6 +5,7 @@ import com.semestre5.ProAula.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,5 +44,15 @@ public class UserService {
             return userRepository.save(updatedUser);
         }
         throw new RuntimeException("Usuario no encontrado para actualizar.");
+    }
+
+    @Transactional
+    public void eliminarUsuario(String userId) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("Usuario no encontrado para eliminar con ID: " + userId);
+        }
+        userRepository.deleteById(userId);
+        System.out.println("Usuario eliminado con ID: " + userId); // Log
     }
 }

@@ -3,12 +3,16 @@ package com.semestre5.ProAula.Services;
 import com.semestre5.ProAula.Model.User;
 import com.semestre5.ProAula.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class UserDatailsService implements UserDetailsService {
 
@@ -20,22 +24,23 @@ public class UserDatailsService implements UserDetailsService {
         System.out.println("Intentando cargar usuario por email: " + email); // DEBUG
 
         User appUser = userRepository.findByEmail(email);
-
-
         if (appUser == null) {
-            System.out.println("Usuario NO encontrado: " + email); // DEBUG
             throw new UsernameNotFoundException("Usuario no encontrado con email: " + email);
         }
 
-        // Si llegamos aquí, el usuario fue encontrado
-        System.out.println("Usuario ENCONTRADO: " + appUser.getEmail()); // DEBUG
-
-        System.out.println("Password HASH de BD: " + appUser.getContrasena()); // DEBUG (¡No mostrar en producción!)
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        if (appUser.getUserTipo() != null) {
+            authorities.add(new SimpleGrantedAuthority(appUser.getUserTipo().name()));
+            System.out.println("Autoridad asignada: " + appUser.getUserTipo().name());
+        } else {
+            authorities.add(new SimpleGrantedAuthority("NORMAL"));
+            System.out.println("Advertencia: userTipo es null para " + email + ", asignada autoridad NORMAL.");
+        }
 
         return new org.springframework.security.core.userdetails.User(
-                appUser.getEmail(), // O el campo que uses como username
-                appUser.getContrasena(),       // La CONTRASEÑA CODIFICADA de la BD
-                new ArrayList<>()            // Lista de roles/autoridades
+                appUser.getEmail(),
+                appUser.getContrasena(),
+                authorities
         );
     }
 }
