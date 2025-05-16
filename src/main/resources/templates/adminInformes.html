@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <title> Admin Dashboard</title>
+    <style>
+        .table th, .table td { vertical-align: middle; }
+        .badge { font-size: 0.85em; }
+        #reportesParaSeleccionContainer { max-height: 350px; overflow-y: auto; margin-top: 1rem; border: 1px solid #ddd; padding: 10px;}
+        .form-check-label { font-weight: normal !important; }
+        .modal-xl { max-width: 90%; } /* Modal más ancho */
+    </style>
+</head>
+
+<body>
+<div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-white" id="sidebar-wrapper">
+        <div class="sidebar-heading text-center py-4 primary-text fs-4 fw-bold text-uppercase border-bottom">PRGA
+        </div>
+        <div class="list-group list-group-flush my-3">
+            <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+            <a href="/admin/profile" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-project-diagram me-2"></i>Mi perfil</a>
+            <a href="/admin/analytics" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-chart-line me-2"></i>Analytics</a>
+            <a href="/admin/informes" class="list-group-item list-group-item-action bg-transparent second-text fw-bold active"><i
+                    class="fas fa-chart-line me-2"></i>Informe-Aleta</a>
+            <a href="/admin/reportes" class="list-group-item list-group-item-action bg-transparent second-text fw-bold"><i
+                    class="fas fa-paperclip me-2"></i>Reports</a>
+            <a class="list-group-item list-group-item-action bg-transparent text-danger fw-bold" href="#" onclick="logout(event)"><i
+                    class="fas fa-power-off me-2"></i>Logout</a>
+            <form id="logout-form" action="/logout" method="post" style="display: none;">
+            </form>
+        </div>
+    </div>
+    <!-- Fin Sidebar -->
+
+    <!-- ADmi -->
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-light bg-transparent py-4 px-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-align-left primary-text fs-4 me-3" id="menu-toggle"></i>
+                <h2 class="fs-2 m-0">INFORMACION Admin</h2>
+            </div>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle second-text fw-bold" href="#" id="navbarDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-2"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/admidashboar/Perfiladmi/Profile.html">Profile</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- FIN ADmi -->
+
+        <div class="container-fluid px-4">
+            <div class="row mb-3 mt-3">
+                <div class="col text-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoInformeModal"><i class="fas fa-plus me-2"></i>Nuevo Informe de Alerta</button>
+                </div>
+            </div>
+
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert"><strong th:text="${successMessage}"></strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert"><strong th:text="${errorMessage}"></strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+            <div class="table-responsive card shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Valoración</th>
+                            <th>Fecha Creación</th>
+                            <th>Nº Reportes Asociados</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="informe : ${informesExistentes}"> <td th:text="${informe.id}"></td>
+                            <td th:text="${informe.descripcion}"></td>
+                            <td><span th:text="${informe.estado}" th:classappend="${informe.estado?.name() == 'SIN_RESOLVER' ? 'badge bg-danger' : (informe.estado?.name() == 'EN_PROCESO' ? 'badge bg-warning text-dark' : 'badge bg-success')}" class="badge"></span></td>
+                            <td><span th:text="${informe.valoracion}" th:classappend="${informe.valoracion?.name() == 'CRITICA' ? 'badge bg-dark' : (informe.valoracion?.name() == 'ALTA' ? 'badge bg-danger' : (informe.valoracion?.name() == 'MEDIA' ? 'badge bg-warning text-dark' : 'badge bg-info text-dark'))}" class="badge"></span></td>
+                            <td th:text="${#temporals.format(informe.fechaCreacion, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${#lists.size(informe.reportesIds)}"></td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Editar Informe" data-bs-toggle="modal" data-bs-target="#editarInformeModal" th:attr="data-informe-id=${informe.id}" onclick="cargarDatosInformeParaEditar(this)"><i class="bi bi-pencil-fill"></i></button>
+                                <form th:action="@{/admin/informes/eliminar/{id}(id=${informe.id})}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar este informe?');"><button type="submit" class="btn btn-sm btn-danger" title="Eliminar Informe"><i class="fas fa-trash"></i></button></form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(informesExistentes)}"><td colspan="7" class="text-center fst-italic">No hay informes de alerta.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal fade" id="nuevoInformeModal" tabindex="-1" aria-labelledby="nuevoInformeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header"><h5 class="modal-title" id="nuevoInformeModalLabel">Crear Nuevo Informe de Alerta</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body">
+                            <form th:action="@{/admin/informes/guardar}" th:object="${informeNuevo}" method="POST" class="needs-validation" novalidate id="formNuevoInforme">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="descripcionNuevo" class="form-label fw-bold">Descripción del Informe <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="descripcionNuevo" th:field="*{descripcion}" rows="2" required></textarea>
+                                        <div class="invalid-feedback">Descripción requerida.</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="estadoNuevo" class="form-label fw-bold">Estado del Informe <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="estadoNuevo" th:field="*{estado}" required>
+                                            <option value="">Seleccione...</option>
+                                            <option th:each="est : ${estadosInformeAlerta}" th:value="${est}" th:text="${est}"></option>
+                                        </select>
+                                        <div class="invalid-feedback">Estado requerido.</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="valoracionNuevo" class="form-label fw-bold">Valoración de Riesgo <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="valoracionNuevo" th:field="*{valoracion}" required>
+                                            <option value="">Seleccione...</option>
+                                            <option th:each="val : ${valoracionesRiesgo}" th:value="${val}" th:text="${val}"></option>
+                                        </select>
+                                        <div class="invalid-feedback">Valoración requerida.</div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5 class="mt-3">Asociar Reportes Existentes</h5>
+                                <div class="card p-3 mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-3"><label for="filtroBarrio" class="form-label">Barrio:</label><select id="filtroBarrio" class="form-select form-select-sm"><option value="">Todos</option><option th:each="b : ${barrios}" th:value="${b.id}" th:text="${b.nombre}"></option></select></div>
+                                        <div class="col-md-3"><label for="filtroContaminante" class="form-label">Contaminante:</label><select id="filtroContaminante" class="form-select form-select-sm"><option value="">Todos</option><option th:each="c : ${contaminantes}" th:value="${c.id}" th:text="${c.nombre}"></option></select></div>
+                                        <div class="col-md-2"><label for="filtroFechaDesde" class="form-label">Desde:</label><input type="date" id="filtroFechaDesde" class="form-control form-control-sm"></div>
+                                        <div class="col-md-2"><label for="filtroFechaHasta" class="form-label">Hasta:</label><input type="date" id="filtroFechaHasta" class="form-control form-control-sm"></div>
+                                        <div class="col-md-2 align-self-end"><button type="button" id="btnFiltrarReportes" class="btn btn-info btn-sm w-100">Buscar</button></div>
+                                    </div>
+                                    <div id="reportesParaSeleccionContainer" class="mt-3">
+                                        <table class="table table-sm table-bordered table-striped">
+                                            <thead><tr><th>Sel.</th><th>ID</th><th>Usuario</th><th>Dirección</th><th>Fecha</th><th>Estado</th><th>Barrio</th><th>Contaminantes</th></tr></thead>
+                                            <tbody id="tablaReportesFiltrados"><tr><td colspan="8" class="text-center">Use filtros para buscar reportes.</td></tr></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="form-text">Seleccione los reportes a asociar. Los IDs seleccionados se guardarán en <code>reportesIds</code>.</div>
+                                </div>
+                                <hr>
+                                <div class="text-end"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Informe</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editarInformeModal" tabindex="-1" aria-labelledby="editarInformeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header"><h5 class="modal-title" id="editarInformeModalLabel">Editar Informe</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body">
+                            <form id="formEditarInforme" method="POST" th:action="@{/admin/informes/guardar}" class="needs-validation" novalidate>
+                                <input type="hidden" id="idEditar" name="id" />
+                                <div class="mb-3"><label for="descripcionEditar" class="form-label fw-bold">Descripción</label><textarea class="form-control" id="descripcionEditar" name="descripcion" rows="3" required></textarea></div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label for="estadoEditar" class="form-label fw-bold">Estado</label><select class="form-select" id="estadoEditar" name="estado" required><option th:each="est : ${estadosInformeAlerta}" th:value="${est}" th:text="${est}"></option></select></div>
+                                    <div class="col-md-6 mb-3"><label for="valoracionEditar" class="form-label fw-bold">Valoración</label><select class="form-select" id="valoracionEditar" name="valoracion" required><option th:each="val : ${valoracionesRiesgo}" th:value="${val}" th:text="${val}"></option></select></div>
+                                </div>
+                                <hr>
+                                <h5 class="mt-3">Reportes Asociados (IDs)</h5>
+                                <div id="reportesAsociadosContainerEditar" class="mb-3 p-2 border rounded bg-light">
+                                    <p class="m-0"><em>Para modificar los reportes asociados, cree un nuevo informe o implemente lógica de edición avanzada.</em></p>
+                                    <div id="hiddenReportesIdsContainerEditar"></div>
+                                </div>
+                                <hr>
+                                <div class="text-end"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Cambios</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    var el = document.getElementById("wrapper");
+    var toggleButton = document.getElementById("menu-toggle");
+    if (toggleButton) { toggleButton.onclick = function () { el.classList.toggle("toggled"); }; }
+
+    document.getElementById('btnFiltrarReportes')?.addEventListener('click', function() {
+        const params = new URLSearchParams({
+            barrioId: document.getElementById('filtroBarrio').value,
+            contaminanteId: document.getElementById('filtroContaminante').value,
+            fechaDesde: document.getElementById('filtroFechaDesde').value,
+            fechaHasta: document.getElementById('filtroFechaHasta').value
+            // estadoReporte: document.getElementById('filtroEstadoReporte').value // Si lo añades
+        });
+        const tablaBody = document.getElementById('tablaReportesFiltrados');
+        tablaBody.innerHTML = '<tr><td colspan="8" class="text-center">Buscando...</td></tr>';
+        fetch(`/admin/api/reportes/filtrar?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                tablaBody.innerHTML = '';
+                if (data && data.length > 0) {
+                    data.forEach(r => {
+                        const row = tablaBody.insertRow();
+                        row.insertCell().innerHTML = `<input class="form-check-input" type="checkbox" name="reportesIds" value="${r.id}" id="sel_rep_${r.id}">`;
+                        row.insertCell().innerHTML = `<label for="sel_rep_${r.id}" class="form-check-label small">${r.id}</label>`;
+                        row.insertCell().textContent = r.usuarioNombre || 'N/A';
+                        row.insertCell().textContent = r.direccion || 'N/A';
+                        row.insertCell().textContent = r.fechaReporte ? new Date(r.fechaReporte).toLocaleDateString('es-CO') : 'N/A';
+                        row.insertCell().innerHTML = `<span class="badge bg-secondary">${r.estado || 'N/A'}</span>`;
+                        row.insertCell().textContent = r.barrioNombre || 'N/A';
+                        row.insertCell().textContent = r.contaminanteNombres ? r.contaminanteNombres.join(', ') : 'N/A';
+                    });
+                } else {
+                    tablaBody.innerHTML = '<tr><td colspan="8" class="text-center">No se encontraron reportes.</td></tr>';
+                }
+            }).catch(err => {
+                tablaBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error al cargar reportes.</td></tr>';
+                console.error(err);
+            });
+    });
+
+    function cargarDatosInformeParaEditar(button) {
+        const informeId = button.getAttribute('data-informe-id');
+        const editarModal = new bootstrap.Modal(document.getElementById('editarInformeModal'));
+        fetch(`/admin/informes/get/${informeId}`)
+            .then(response => response.json())
+            .then(informe => {
+                document.getElementById('idEditar').value = informe.id;
+                document.getElementById('descripcionEditar').value = informe.descripcion || '';
+                document.getElementById('estadoEditar').value = informe.estado || '';
+                document.getElementById('valoracionEditar').value = informe.valoracion || '';
+
+                // Para edición, la modificación de reportesIds es compleja y se omite en esta versión simple.
+                // Se muestran los IDs actuales y se reenvían si no se cambian.
+                const reportesContainer = document.getElementById('reportesAsociadosContainerEditar');
+                const hiddenContainer = document.getElementById('hiddenReportesIdsContainerEditar');
+                reportesContainer.innerHTML = '';
+                hiddenContainer.innerHTML = '';
+                if(informe.reportesIds && informe.reportesIds.length > 0) {
+                    reportesContainer.innerHTML = `<p class="m-0 small">IDs de Reportes Asociados: ${informe.reportesIds.join(', ')}</p>
+                                                 <p class="m-0 small text-muted"><em>Para cambiar los reportes asociados, por favor cree un nuevo informe de alerta.</em></p>`;
+                    informe.reportesIds.forEach(id => { // Reenviar los IDs existentes
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'reportesIds'; // Asegurar que el name sea el correcto para el binding
+                        input.value = id;
+                        hiddenContainer.appendChild(input);
+                    });
+                } else {
+                     reportesContainer.innerHTML = '<p class="m-0 small fst-italic">No hay reportes asociados actualmente.</p>';
+                }
+                editarModal.show();
+            }).catch(error => console.error('Error al cargar datos del informe para editar:', error));
+    }
+    (function(){'use strict';var forms=document.querySelectorAll('.needs-validation');Array.prototype.slice.call(forms).forEach(function(form){form.addEventListener('submit',function(event){if(!form.checkValidity()){event.preventDefault();event.stopPropagation();}form.classList.add('was-validated');},false);});})();
+</script>
+</body>
+
+
+<style th:inline="css">
+    .body{
+    padding-top: 75px;
+}
+
+:root {
+    --main-bg-color: #009d63;
+    --main-text-color: #009d63;
+    --second-text-color: #bbbec5;
+    --second-bg-color: #c1efde;
+  }
+
+  .primary-text {
+    color: var(--main-text-color);
+  }
+
+  .second-text {
+    color: var(--second-text-color);
+  }
+
+  .primary-bg {
+    background-color: var(--main-bg-color);
+  }
+
+  .secondary-bg {
+    background-color: var(--second-bg-color);
+  }
+
+  .rounded-full {
+    border-radius: 100%;
+  }
+
+  #wrapper {
+    overflow-x: hidden;
+    background-image: linear-gradient(
+      to right,
+      #baf3d7,
+      #c2f5de,
+      #cbf7e4,
+      #d4f8ea,
+      #ddfaef
+    );
+  }
+
+  #sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -15rem;
+    -webkit-transition: margin 0.25s ease-out;
+    -moz-transition: margin 0.25s ease-out;
+    -o-transition: margin 0.25s ease-out;
+    transition: margin 0.25s ease-out;
+  }
+
+  #sidebar-wrapper .sidebar-heading {
+    padding: 0.875rem 1.25rem;
+    font-size: 1.2rem;
+  }
+
+  #sidebar-wrapper .list-group {
+    width: 15rem;
+  }
+
+  #page-content-wrapper {
+    min-width: 100vw;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #menu-toggle {
+    cursor: pointer;
+  }
+
+  .list-group-item {
+    border: none;
+    padding: 20px 30px;
+  }
+
+  .list-group-item.active {
+    background-color: transparent;
+    color: var(--main-text-color);
+    font-weight: bold;
+    border: none;
+  }
+
+  @media (min-width: 768px) {
+    #sidebar-wrapper {
+      margin-left: 0;
+    }
+
+    #page-content-wrapper {
+      min-width: 0;
+      width: 100%;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+      margin-left: -15rem;
+    }
+  }
+
+
+/*Foooter*/
+.container {
+    max-width: 1170px;
+    margin: auto;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+ul {
+    list-style: none;
+}
+
+.footer {
+    background-color: #24262b;
+    padding: 70px 0;
+}
+
+.footer-col {
+    width: 25%;
+    padding: 0 15px;
+}
+
+.footer-col h4 {
+    font-size: 18px;
+    color: #ffffff;
+    text-transform: capitalize;
+    margin-bottom: 35px;
+    font-weight: 500;
+    position: relative;
+}
+
+.footer-col h4::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    background-color: #e91e63;
+    height: 2px;
+    box-sizing: border-box;
+    width: 50px;
+}
+
+.footer-col ul li:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.footer-col ul li a {
+    font-size: 16px;
+    text-transform: capitalize;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 300;
+    color: #bbbbbb;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.footer-col ul li a:hover {
+    color: #ffffff;
+    padding-left: 8px;
+}
+
+.footer-col .social-links a {
+    display: inline-block;
+    height: 40px;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 0 10px 10px 0;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    color: #ffffff;
+    transition: all 0.5s ease;
+}
+
+.footer-col .social-links a:hover {
+    color: #24262b;
+    background-color: #ffffff;
+}
+
+@media(max-width: 767px) {
+    .footer-col {
+        width: 50%;
+        margin-bottom: 30px;
+    }
+}
+
+@media(max-width: 574px) {
+    .footer-col {
+        width: 100%;
+    }
+}
+
+/*Foooter Fin*/
+</style>
+
+
+</html>

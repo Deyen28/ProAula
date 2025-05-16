@@ -1,11 +1,14 @@
 package com.semestre5.ProAula.Controller;
-import com.semestre5.ProAula.Model.Barrios;
-import com.semestre5.ProAula.Model.Contaminante;
-import com.semestre5.ProAula.Model.Reportes;
-import com.semestre5.ProAula.Model.User;
+import com.semestre5.ProAula.Model.*;
+import com.semestre5.ProAula.Repository.InformeAlertaRepository;
 import com.semestre5.ProAula.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,10 +16,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,14 +44,38 @@ public class AdminController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private StorageService storageService;
+    @Autowired
+    private InformeAlertaService informeAlertaService;
+
 
     @Value("${powerbi.analytics.embed.url}") // Define esta propiedad en application.properties
     private String powerBiEmbedUrl;
 
     @GetMapping("/dashboard")
-    public String adminView(Model model) {
-        List<User> usuarios = userService.listarTodos();
-        model.addAttribute("usuarios", usuarios);
+    public String adminView(Model model,
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "10") int size,
+                            @RequestParam(required = false) String searchTerm,
+                            @RequestParam(required = false) String searchBy, // "id" o "email"
+                            @RequestParam(defaultValue = "id,asc") String[] sort) {
+        String sortField = sort[0];
+        String sortDirection = (sort.length > 1 && "desc".equalsIgnoreCase(sort[1])) ? "desc" : "asc";
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
+        Page<User> paginaUsuarios = userService.findUsuariosPaginadosYFiltrados(searchTerm, searchBy, pageable);
+
+        model.addAttribute("paginaUsuarios", paginaUsuarios);
+        model.addAttribute("usuarios", paginaUsuarios.getContent()); // Para compatibilidad con el th:each existente
+        model.addAttribute("currentPage", paginaUsuarios.getNumber());
+        model.addAttribute("totalPages", paginaUsuarios.getTotalPages());
+        model.addAttribute("totalItems", paginaUsuarios.getTotalElements());
+
+        // Pasar parámetros de búsqueda y ordenación de vuelta para mantenerlos en los enlaces de paginación/filtros
+        model.addAttribute("searchTerm", searchTerm);
+        model.addAttribute("searchBy", searchBy);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDirection);
+        model.addAttribute("reverseSortDir", sortDirection.equals("asc") ? "desc" : "asc");
         return "adminView";
     }
 
@@ -234,44 +263,134 @@ public class AdminController {
     }
 
     @GetMapping("/reportes")
-    public String showAllReports(Model model) {
-        List<Reportes> todosLosReportes = reportesService.listarTodos();
-        List<User> todosLosUsuarios = userService.listarTodos();
-        List<Barrios> todosLosBarrios = barriosService.listarTodosLosBarrios();
-        List<Contaminante> todosLosContaminantes = contaminanteService.listarTodosLosContaminantes();
+    public String showAllReports(Model model,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(required = false) String usuarioTerm, // ID, nombre o email de usuario
+                                 @RequestParam(required = false) String contaminanteId,
+                                 @RequestParam(required = false) String barrioId,
+                                 @RequestParam(required = false) Reportes.EstadoReporte estadoReporte,
+                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+                                 @RequestParam(defaultValue = "fechaReporte,desc") String[] sort) {
 
-        Map<String, String> mapaNombresUsuarios = todosLosUsuarios.stream()
-                .collect(Collectors.toMap(User::getId, User::getUser_name, (n1, n2) -> n1)); // Usa user_name
+        String sortField = sort[0];
+        String sortDirection = (sort.length > 1 && "asc".equalsIgnoreCase(sort[1])) ? "asc" : "desc";
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
 
-        Map<String, String> mapaNombresBarrios = todosLosBarrios.stream()
-                .collect(Collectors.toMap(Barrios::getId, Barrios::getNombre, (n1, n2) -> n1));
+        List<String> userIdsCoincidentes = null;
+        boolean searchTermIsLikelyAnId = false;
 
-        Map<String, String> mapaNombresContaminantes = todosLosContaminantes.stream()
-                .collect(Collectors.toMap(Contaminante::getId, Contaminante::getNombre, (n1, n2) -> n1));
-
-        List<Map<String, Object>> reportesParaVistaGlobal = new ArrayList<>();
-        for (Reportes reporte : todosLosReportes) {
-            Map<String, Object> datosVista = new HashMap<>();
-            datosVista.put("reporte", reporte); // Objeto reporte original
-
-            String nombreUsuario = mapaNombresUsuarios.getOrDefault(reporte.getUserId(), "Usuario Desconocido");
-            datosVista.put("usuarioNombre", nombreUsuario);
-
-            String nombreBarrio = mapaNombresBarrios.getOrDefault(reporte.getBarrioId(), "Barrio Desconocido");
-            datosVista.put("barrioNombre", nombreBarrio);
-
-            List<String> nombresContaminantes = new ArrayList<>();
-            if (reporte.getContaminantesIds() != null) {
-                for (String contId : reporte.getContaminantesIds()) {
-                    nombresContaminantes.add(mapaNombresContaminantes.getOrDefault(contId, "ID Cont. Desconocido"));
+        if (StringUtils.hasText(usuarioTerm)) {
+            if (usuarioTerm.matches("[a-fA-F0-9]{24}")) { // Asumiendo formato ObjectId de Mongo
+                searchTermIsLikelyAnId = true;
+                // No necesitamos buscar, el servicio puede usarlo directamente si es un ID exacto.
+            } else {
+                // No es un ID, buscar usuarios por nombre o email
+                Page<User> usuariosEncontrados = userService.findUsuariosPaginadosYFiltrados(usuarioTerm, null, PageRequest.of(0, 50)); // Limitar resultados
+                if (!usuariosEncontrados.isEmpty()) {
+                    userIdsCoincidentes = usuariosEncontrados.getContent().stream().map(User::getId).collect(Collectors.toList());
+                } else {
+                    // Si no se encuentran usuarios por nombre/email, y no era un ID, no habrá resultados para este filtro.
+                    // Podríamos pasar una lista vacía para userIds, lo que resultará en 0 reportes si este es el único filtro.
+                    userIdsCoincidentes = new ArrayList<>();
                 }
             }
-            datosVista.put("contaminanteNombres", nombresContaminantes); // Lista de nombres
-            reportesParaVistaGlobal.add(datosVista);
         }
-        model.addAttribute("reportesParaVistaGlobal", reportesParaVistaGlobal);
+
+        Page<Reportes> paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
+                userIdsCoincidentes, searchTermIsLikelyAnId, usuarioTerm, // Pasamos el término original también
+                contaminanteId, barrioId, estadoReporte, fechaDesde, fechaHasta, pageable
+        );
+
+        List<Map<String, Object>> reportesEnriquecidos = enriquecerListaDeReportes(paginaReportes.getContent());
+
+        model.addAttribute("paginaReportes", paginaReportes);
+        model.addAttribute("reportesParaVistaGlobal", reportesEnriquecidos);
+        model.addAttribute("currentPage", paginaReportes.getNumber());
+        model.addAttribute("totalPages", paginaReportes.getTotalPages());
+        model.addAttribute("totalItems", paginaReportes.getTotalElements());
+
+        // Para los filtros desplegables
+        model.addAttribute("usuarios", userService.listarTodos());
+        model.addAttribute("contaminantes", contaminanteService.listarTodosLosContaminantes());
+        model.addAttribute("barrios", barriosService.listarTodosLosBarrios());
+        model.addAttribute("estadosReporte", Reportes.EstadoReporte.values());
+
+        // Pasar parámetros de filtro y ordenación de vuelta para mantenerlos en los enlaces
+        model.addAttribute("usuarioTermFiltro", usuarioTerm);
+        model.addAttribute("contaminanteIdFiltro", contaminanteId);
+        model.addAttribute("barrioIdFiltro", barrioId);
+        model.addAttribute("estadoReporteFiltro", estadoReporte);
+        model.addAttribute("fechaDesdeFiltro", fechaDesde);
+        model.addAttribute("fechaHastaFiltro", fechaHasta);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDirection);
+        model.addAttribute("reverseSortDir", sortDirection.equals("asc") ? "desc" : "asc");
+
         return "adminReportes";
     }
+
+    private List<Map<String, Object>> enriquecerListaDeReportes(List<Reportes> reportes) {
+        if (reportes.isEmpty()) {
+            return new ArrayList<>();
+        }
+        // Optimización: Obtener todos los IDs necesarios y luego hacer búsquedas masivas
+        List<String> userIds = reportes.stream().map(Reportes::getUserId).distinct().collect(Collectors.toList());
+        List<String> barrioIds = reportes.stream().map(Reportes::getBarrioId).distinct().collect(Collectors.toList());
+        List<String> contaminanteIds = reportes.stream()
+                .filter(r -> r.getContaminantesIds() != null)
+                .flatMap(r -> r.getContaminantesIds().stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, String> mapaNombresUsuarios = userService.listarTodos().stream()
+                .filter(u -> userIds.contains(u.getId()))
+                .collect(Collectors.toMap(User::getId, User::getUser_name, (n1, n2) -> n1));
+
+        Map<String, String> mapaNombresBarrios = barriosService.listarTodosLosBarrios().stream()
+                .filter(b -> barrioIds.contains(b.getId()))
+                .collect(Collectors.toMap(Barrios::getId, Barrios::getNombre, (n1, n2) -> n1));
+
+        Map<String, String> mapaNombresContaminantes = contaminanteService.listarTodosLosContaminantes().stream()
+                .filter(c -> contaminanteIds.contains(c.getId()))
+                .collect(Collectors.toMap(Contaminante::getId, Contaminante::getNombre, (n1, n2) -> n1));
+
+        return reportes.stream().map(reporte -> {
+            Map<String, Object> datosVista = new HashMap<>();
+            datosVista.put("reporte", reporte);
+            datosVista.put("usuarioNombre", mapaNombresUsuarios.getOrDefault(reporte.getUserId(), "ID: " + reporte.getUserId()));
+            datosVista.put("barrioNombre", mapaNombresBarrios.getOrDefault(reporte.getBarrioId(), "ID: " + reporte.getBarrioId()));
+            List<String> nombresCont = reporte.getContaminantesIds() != null ?
+                    reporte.getContaminantesIds().stream()
+                            .map(id -> mapaNombresContaminantes.getOrDefault(id, "ID: " + id))
+                            .collect(Collectors.toList()) : new ArrayList<>();
+            datosVista.put("contaminanteNombres", nombresCont);
+            return datosVista;
+        }).collect(Collectors.toList());
+    }
+
+    @PostMapping("/reportes/updateEstado")
+    @ResponseBody
+    public ResponseEntity<?> updateReporteEstado(
+            @RequestParam String reporteId,
+            @RequestParam Reportes.EstadoReporte nuevoEstado) {
+        try {
+            Reportes reporteActualizado = reportesService.actualizarEstadoReporte(reporteId, nuevoEstado);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Estado del reporte actualizado a " + reporteActualizado.getEstado().name());
+            response.put("nuevoEstado", reporteActualizado.getEstado().name());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+
 
     @PostMapping("/deleteReport/{id}")
     public String deleteAnyReport(@PathVariable String id, RedirectAttributes redirectAttributes) {
@@ -305,5 +424,111 @@ public class AdminController {
         model.addAttribute("powerBiEmbedUrl", powerBiEmbedUrl);
         model.addAttribute("pageTitle", "Dashboard de Analíticas"); // Título opcional para la página
         return "adminAnalytics";
+    }
+
+
+    /**
+     * Muestra la página de gestión de Informes de Alerta.
+     * Prepara datos para la tabla principal y para los filtros del modal de creación.
+     */
+    @GetMapping("/informes")
+    public String showGestionInformesPage(Model model) {
+        List<InformeAlerta> todosLosInformes = informeAlertaService.findAll();
+
+        // Para la tabla principal, podríamos querer mostrar un resumen de los reportes asociados.
+        // Esto puede ser complejo si hay muchos reportes. Por ahora, pasamos los informes tal cual.
+        // Se podría añadir lógica para obtener un conteo o algunos detalles clave de los reportes asociados.
+        model.addAttribute("informesExistentes", todosLosInformes);
+
+        // Datos para el modal de NUEVO informe (incluyendo filtros para seleccionar reportes)
+        model.addAttribute("informeNuevo", new InformeAlerta()); // Para th:object
+        model.addAttribute("barrios", barriosService.listarTodosLosBarrios()); // Para el filtro de barrio de reportes
+        model.addAttribute("contaminantes", contaminanteService.listarTodosLosContaminantes()); // Para el filtro de contaminante de reportes
+        model.addAttribute("estadosReporte", Reportes.EstadoReporte.values()); // Para el filtro de estado de reportes
+
+        // Enums para el formulario del InformeAlerta
+        model.addAttribute("estadosInformeAlerta", InformeAlerta.EstadoInforme.values());
+        model.addAttribute("valoracionesRiesgo", InformeAlerta.ValoracionRiesgo.values());
+
+        return "adminInformes"; // Nombre del archivo adminInformes.html
+    }
+
+    /**
+     * Endpoint AJAX para filtrar reportes que se mostrarán en el modal para selección.
+     * Devuelve una lista de reportes "enriquecidos" con nombres.
+     */
+    @GetMapping("/api/reportes/filtrar")
+    @ResponseBody
+    public List<Map<String, Object>> getReportesFiltradosParaSeleccion(
+            @RequestParam(required = false) String barrioId,
+            @RequestParam(required = false) String contaminanteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(required = false) Reportes.EstadoReporte estadoReporte) {
+
+        List<Reportes> reportesFiltrados = reportesService.getReportesFiltrados(
+                barrioId, contaminanteId, fechaDesde, fechaHasta, estadoReporte);
+
+        // Enriquecer con nombres para la tabla de selección en el modal
+        // (Reutilizando el método helper si lo tienes, o implementando la lógica aquí)
+        return enriquecerListaDeReportes(reportesFiltrados);
+    }
+
+    /**
+     * Guarda un nuevo Informe de Alerta o actualiza uno existente.
+     * El objeto 'informe' se enlaza desde el formulario del modal.
+     * Los 'reportesIds' se reciben del formulario si los checkboxes tienen name="reportesIds".
+     */
+    @PostMapping("/informes/guardar")
+    public String saveOrUpdateInformeAlerta(
+            @ModelAttribute("informeNuevo") InformeAlerta informe, // th:object del modal
+            RedirectAttributes redirectAttributes) {
+        try {
+            // La lógica de fechaCreacion y asegurar listas no nulas está en el servicio save()
+            informeAlertaService.save(informe);
+            redirectAttributes.addFlashAttribute("successMessage", "Informe de alerta guardado correctamente.");
+        } catch (Exception e) {
+            System.err.println("Error al guardar informe de alerta: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar el informe: " + e.getMessage());
+        }
+        return "redirect:/admin/informes";
+    }
+
+    /**
+     * Obtiene los datos de un Informe de Alerta específico para edición (JSON para AJAX).
+     * Incluye los reportesIds para que el modal de edición pueda preseleccionar los reportes asociados.
+     */
+    @GetMapping("/informes/get/{id}")
+    @ResponseBody
+    public ResponseEntity<?> getInformeAlertaJson(@PathVariable String id) {
+        InformeAlerta informe = informeAlertaService.findById(id);
+        if (informe != null) {
+            // Aquí podrías querer devolver un DTO que también incluya detalles de los reportes asociados
+            // si el modal de edición necesita mostrar más que solo los IDs.
+            // Por ahora, devolvemos el informe tal cual, que incluye reportesIds.
+            return ResponseEntity.ok(informe);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Informe de alerta no encontrado con ID: " + id);
+        }
+    }
+
+    /**
+     * Elimina un Informe de Alerta.
+     */
+    @PostMapping("/informes/eliminar/{id}")
+    public String deleteInformeAlerta(@PathVariable String id, RedirectAttributes redirectAttributes) {
+        try {
+            if (informeAlertaService.findById(id) == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Informe a eliminar no encontrado.");
+                return "redirect:/admin/informes";
+            }
+            informeAlertaService.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Informe de alerta eliminado correctamente.");
+        } catch (Exception e) {
+            System.err.println("Error al eliminar informe de alerta: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar el informe: " + e.getMessage());
+        }
+        return "redirect:/admin/informes";
     }
 }
