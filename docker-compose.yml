@@ -7,22 +7,42 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/proAulaMongo
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo_db:27017/proAulaMongo
+      - SPRING_DATA_REDIS_HOST=redis_cache
+      - SPRING_SESSION_STORE_TYPE=redis
+      # - SPRING_DATA_REDIS_PASSWORD=tu_password_si_aplica
     depends_on:
-      - mongo
+      - mongo_db
+      - redis_cache
     networks:
-      - proaula-network # Conecta este servicio a nuestra red personalizada
-  mongo:
-    image: mongo:latest # Usa la imagen oficial de MongoDB más reciente desde Docker Hub
-    container_name: proaula_mongo_container # Nombre opcional para el contenedor
-    ports:
-      - "27017:27017" # Mapea el puerto 27017 del host al 27017 del contenedor (útil para herramientas externas)
+      - proaula-network
     volumes:
-      - mongo-data:/data/db # Persiste los datos de MongoDB en un volumen llamado 'mongo-data'
+      - ./uploads:/app/uploads
+  mongo_db:
+    image: mongo:latest
+    container_name: proaula_mongo_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
     networks:
-      - proaula-network # Conecta este servicio a nuestra red personalizada
+      - proaula-network
+
+  redis_cache:
+    image: redis:latest
+    container_name: proaula_redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - proaula-network
+    # command: redis-server --requirepass tucontrasenasegura
+
 volumes:
-  mongo-data: # Este volumen almacenará los datos de MongoDB
+  mongo-data:
+  redis-data:
+
 networks:
   proaula-network:
-    driver: bridge # Usa el driver de red por defecto 'bridge'
+    driver: bridge

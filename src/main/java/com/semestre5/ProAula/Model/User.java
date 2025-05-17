@@ -3,11 +3,13 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.io.Serializable;
 import java.util.List;
 
 @Document(collection = "Usuarios")
 
-public class User {
+public class User implements Serializable {
 
     @Id
     private String id;
@@ -26,6 +28,7 @@ public class User {
 
     private UserTipo userTipo;
 
+    private static final long serialVersionUID = 1L;
 
     public User() {
     }
