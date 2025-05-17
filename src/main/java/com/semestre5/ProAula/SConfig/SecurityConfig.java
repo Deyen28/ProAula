@@ -36,6 +36,7 @@ public class SecurityConfig {
                         // --- Permisos Públicos ---
                         .requestMatchers("/", "/index.html", "/favicon.ico", "/manifest.json", "/static/**", "/imagenes/**","/uploads/**").permitAll()
                         .requestMatchers("/registerView", "/registrar", "/LoginView").permitAll()
+                        .requestMatchers("/reportes-publicos").permitAll()
                         // URLs necesarias para el proceso de login/logout (importante permitirlas):
                         .requestMatchers("/perform_login").permitAll()
                         .requestMatchers("/LoginView?error=true").permitAll()

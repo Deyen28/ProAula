@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <title>Reportes</title>
+  <style>
+    body {
+        padding-top: 120px; /* Ajusta según la altura de tu navbar */
+        background-color: #f8f9fa; /* Un fondo claro para la página */
+    }
+    .navbar {
+        background-color: white;
+        height: 80px;
+        margin: 20px;
+        border-radius: 16px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .navbar-brand { font-size: 24px; color: #009970; font-weight: 500; }
+    .nav-link { color: #666777; font-weight: 500; }
+    .nav-link.active, .nav-link:hover { color: black; }
+    .Registro-button, .login-button {
+        background-color: #009970; color: white; font-size: 14px;
+        padding: 8px 20px; border-radius: 50px; text-decoration: none;
+        transition: 0.3s;
+    }
+    .Registro-button:hover, .login-button:hover { background-color: #00b383; }
+
+    .card-custom {
+        margin-top: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: none;
+    }
+    .card-custom .card-header {
+        background-color: #009970;
+        color: white;
+        font-weight: bold;
+    }
+    .report-item, .alerta-item {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .report-item:last-child, .alerta-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .report-item img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 4px;
+        margin-top: 5px;
+        object-fit: cover; /* Para que la imagen se ajuste bien */
+    }
+     /* Estilos para badges de estado y valoración */
+    .estado-badge, .valoracion-badge {
+        display: inline-block; padding: 0.3em 0.6em; font-size: 0.85em;
+        font-weight: 600; line-height: 1; text-align: center;
+        white-space: nowrap; vertical-align: baseline; border-radius: 0.25rem;
+    }
+    /* Estados Informe Alerta */
+    .estado-badge[data-estado="EN_PROCESO"] { background-color: #ffc107; color: #000; }
+    .estado-badge[data-estado="SIN_RESOLVER"] { background-color: #dc3545; color: #fff; }
+    .estado-badge[data-estado="RESUELTO"] { background-color: #198754; color: #fff; }
+    /* Valoraciones Informe Alerta */
+    .valoracion-badge[data-valoracion="BAJA"] { background-color: #0dcaf0; color: #000; }
+    .valoracion-badge[data-valoracion="MEDIA"] { background-color: #ffc107; color: #000; }
+    .valoracion-badge[data-valoracion="ALTA"] { background-color: #fd7e14; color: #fff; }
+    .valoracion-badge[data-valoracion="CRITICA"] { background-color: #dc3545; color: #fff; }
+
+    .footer { background-color: #24262b; padding: 70px 0; color: #bbbbbb; }
+    .footer-col h4 { color: #ffffff; text-transform: capitalize; margin-bottom: 35px; font-weight: 500; position: relative; }
+    .footer-col h4::before { content: ''; position: absolute; left:0; bottom: -10px; background-color: #e91e63; height: 2px; box-sizing: border-box; width: 50px; }
+    .footer-col ul { padding-left: 0; list-style: none;} /* Reseteo para listas de footer */
+    .footer-col ul li a { font-size: 16px; text-transform: capitalize; color: #bbbbbb; text-decoration: none; font-weight: 300; display: block; transition: all 0.3s ease; }
+    .footer-col ul li a:hover { color: #ffffff; padding-left: 8px; }
+    .footer-col .social-links a { display: inline-block; height: 40px; width: 40px; background-color: rgba(255,255,255,0.2); margin:0 10px 10px 0; text-align: center; line-height: 40px; border-radius: 50%; color: #ffffff; transition: all 0.5s ease; }
+    .footer-col .social-links a:hover { color: #24262b; background-color: #ffffff; }
+    @media(max-width: 767px) { .footer-col { width: 50%; margin-bottom: 30px; } }
+    @media(max-width: 574px) { .footer-col { width: 100%; } }
+  </style>
+</head>
+
+<body class="hero-section">
+<!---- inicio navbar---->
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand me-auto" href="/">PRGA</a>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar"
+         aria-labelledby="offcanvasNavbarLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+
+        <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
+          <li class="nav-item">
+            <a class="nav-link mx-lg-2" aria-current="page" href="/">Inicio</a>
+          </li>
+          <li class="nav-item mx-lg-2">
+            <a class="nav-link active" href="/reportes">Reportes</a>
+          </li>
+          <li class="nav-item mx-lg-2">
+            <a class="nav-link" href="#footer">Contactos</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <a class="Registro-button" href="/registerView" role="button">Registrarse </a>
+    <a  class="login-button mx-lg-2" href="/LoginView" role="button">Iniciar sesion</a>
+
+    <button class="navbar-toggler pe-0" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<!---- fin navbar---->
+
+
+
+<!----Cartd presentacion-->
+<div class="container-fluid mt-5 pt-3">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-md-12 mb-4">
+      <div class="card card-custom">
+        <div class="card-header">
+          <i class="fas fa-bullhorn me-2"></i>Reportes Ciudadanos
+        </div>
+        <div class="card-body">
+          <form th:action="@{/reportes-publicos}" method="get" class="mb-3">
+            <div class="input-group">
+              <input type="text" id="searchBar" name="search" class="form-control" placeholder="Buscar por nombre de barrio..." th:value="${search}">
+              <input type="hidden" name="alertPage" th:value="${currentAlertPage}">
+              <input type="hidden" name="reportPage" value="0"> <button type="submit" class="btn btn-outline-secondary">
+              <i class="fas fa-search"></i> Buscar
+            </button>
+            </div>
+          </form>
+
+          <div th:if="${not #lists.isEmpty(reportes)}">
+            <div th:each="reporte : ${reportes}" class="report-item">
+              <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                  <i class="fas fa-user-circle fa-2x text-secondary"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mt-0 mb-1" th:text="'@' + ${reporte.userName ?: 'Usuario Anónimo'}"></h6>
+                  <p class="mb-1">
+                    <strong>Barrio:</strong> <span th:text="${reporte.nombreBarrio ?: 'No especificado'}"></span><br>
+                    <strong>Dirección:</strong> <span th:text="${reporte.direccion ?: 'No especificada'}"></span><br>
+                    <strong>Descripción:</strong> <span th:text="${reporte.descripcion ?: 'Sin descripción'}"></span><br>
+                    <strong>Fecha:</strong> <span th:text="${reporte.fechaReporteFormatted ?: 'N/A'}"></span>
+                  </p>
+                  <div th:if="${reporte.evidencia}">
+                    <strong>Evidencia:</strong><br>
+                    <a th:href="@{/uploads/{filename}(filename=${reporte.evidencia})}" target="_blank">
+                      <img th:src="@{/uploads/{filename}(filename=${reporte.evidencia})}"
+                           alt="Evidencia del reporte"
+                           class="img-thumbnail"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                      />
+                      <small class="text-muted" style="display:none;">(Ver imagen)</small>
+                    </a>
+                  </div>
+                  <div th:unless="${reporte.evidencia}">
+                    <small class="text-muted">Sin evidencia adjunta.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(reportes)}" class="text-center text-muted mt-3">
+            <p>No hay reportes para mostrar con los filtros actuales.</p>
+          </div>
+
+          <nav aria-label="Paginación de Reportes" class="mt-4" th:if="${totalReportPages != null and totalReportPages > 0}">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" th:classappend="${currentReportPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(reportPage=0, alertPage=${currentAlertPage}, search=${search})}">Primera</a>
+              </li>
+              <li class="page-item" th:classappend="${currentReportPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(reportPage=${currentReportPage - 1}, alertPage=${currentAlertPage}, search=${search})}">&laquo; Anterior</a>
+              </li>
+
+              <th:block th:with="pageWindow=2,
+                                                   startPage = (${currentReportPage - pageWindow} < 0 ? 0 : ${currentReportPage - pageWindow}),
+                                                   endPage = (${currentReportPage + pageWindow} >= ${totalReportPages} ? ${totalReportPages - 1} : ${currentReportPage + pageWindow})">
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${i == currentReportPage} ? 'active'">
+                  <a class="page-link" th:href="@{/reportes-publicos(reportPage=${i}, alertPage=${currentAlertPage}, search=${search})}" th:text="${i + 1}"></a>
+                </li>
+              </th:block>
+
+              <li class="page-item" th:classappend="${currentReportPage >= totalReportPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(reportPage=${currentReportPage + 1}, alertPage=${currentAlertPage}, search=${search})}">Siguiente &raquo;</a>
+              </li>
+              <li class="page-item" th:classappend="${currentReportPage >= totalReportPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(reportPage=${totalReportPages - 1}, alertPage=${currentAlertPage}, search=${search})}">Última</a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center text-muted small mt-2" th:if="${totalReportPages != null and totalReportPages > 0}">
+            Página <span th:text="${currentReportPage + 1}"></span> de <span th:text="${totalReportPages}"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5 col-md-12">
+      <div class="card card-custom">
+        <div class="card-header">
+          <i class="fas fa-bell me-2"></i>Informes de Alerta
+        </div>
+        <div class="card-body">
+          <div th:if="${not #lists.isEmpty(informes)}">
+            <div th:each="informe : ${informes}" class="alerta-item">
+              <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                  <i class="fas fa-exclamation-triangle fa-2x"
+                     th:classappend="${informe.valoracion == 'CRITICA' ? 'text-danger' : (informe.valoracion == 'ALTA' ? 'text-warning' : 'text-info')}"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mt-0 mb-1">Alerta ID: <span class="fw-normal" th:text="${informe.id}"></span></h6>
+                  <p class="mb-1">
+                    <strong>Barrio(s) Afectado(s):</strong> <span th:text="${informe.barrioNombre ?: 'No especificado'}"></span><br>
+                    <strong>Contaminantes Clave:</strong>
+                    <span th:if="${not #lists.isEmpty(informe.contaminantesNombres)}" th:text="${#strings.listJoin(informe.contaminantesNombres, ', ')}"></span>
+                    <span th:if="${#lists.isEmpty(informe.contaminantesNombres)}">No especificados</span><br>
+                    <strong>Estado:</strong>
+                    <span class="estado-badge" th:attr="data-estado=${informe.estado}" th:text="${informe.estado}"></span><br>
+                    <strong>Valoración de Riesgo:</strong>
+                    <span class="valoracion-badge" th:attr="data-valoracion=${informe.valoracion}" th:text="${informe.valoracion}"></span><br>
+                    <strong>Descripción:</strong> <span th:text="${informe.descripcion ?: 'Sin descripción'}"></span><br>
+                    <strong>Fecha de Creación:</strong> <span th:text="${informe.fechaCreacion ?: 'N/A'}"></span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(informes)}" class="text-center text-muted mt-3">
+            <p>No hay informes de alerta para mostrar.</p>
+          </div>
+
+          <nav aria-label="Paginación de Alertas" class="mt-4" th:if="${totalAlertPages != null and totalAlertPages > 0}">
+            <ul class="pagination pagination-sm justify-content-center">
+              <li class="page-item" th:classappend="${currentAlertPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(alertPage=0, reportPage=${currentReportPage}, search=${search})}">Primera</a>
+              </li>
+              <li class="page-item" th:classappend="${currentAlertPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(alertPage=${currentAlertPage - 1}, reportPage=${currentReportPage}, search=${search})}">&laquo; Anterior</a>
+              </li>
+
+              <th:block th:with="pageWindow=2,
+                                                   startPage = (${currentAlertPage - pageWindow} < 0 ? 0 : ${currentAlertPage - pageWindow}),
+                                                   endPage = (${currentAlertPage + pageWindow} >= ${totalAlertPages} ? ${totalAlertPages - 1} : ${currentAlertPage + pageWindow})">
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${i == currentAlertPage} ? 'active'">
+                  <a class="page-link" th:href="@{/reportes-publicos(alertPage=${i}, reportPage=${currentReportPage}, search=${search})}" th:text="${i + 1}"></a>
+                </li>
+              </th:block>
+
+              <li class="page-item" th:classappend="${currentAlertPage >= totalAlertPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(alertPage=${currentAlertPage + 1}, reportPage=${currentReportPage}, search=${search})}">Siguiente &raquo;</a>
+              </li>
+              <li class="page-item" th:classappend="${currentAlertPage >= totalAlertPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/reportes-publicos(alertPage=${totalAlertPages - 1}, reportPage=${currentReportPage}, search=${search})}">Última</a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center text-muted small mt-2" th:if="${totalAlertPages != null and totalAlertPages > 0}">
+            Página <span th:text="${currentAlertPage + 1}"></span> de <span th:text="${totalAlertPages}"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!---fin card de presetancion-->
+
+<footer class="footer" id="footer">
+  <div class="container">
+    <div class="row">
+      <div class="footer-col">
+        <h4>company</h4>
+        <ul>
+          <li><a href="#">about us</a></li>
+          <li><a href="#">our services</a></li>
+          <li><a href="#">privacy policy</a></li>
+          <li><a href="#">affiliate program</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>get help</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">shipping</a></li>
+          <li><a href="#">returns</a></li>
+          <li><a href="#">order status</a></li>
+          <li><a href="#">payment options</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>online shop</h4>
+        <ul>
+          <li><a href="#">watch</a></li>
+          <li><a href="#">bag</a></li>
+          <li><a href="#">shoes</a></li>
+          <li><a href="#">dress</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>follow us</h4>
+        <div class="social-links">
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+<!---Fin del Footer-->
+
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+  function filterReports() {
+      const input = document.getElementById('searchBar');
+      const filter = input.value.toLowerCase();
+      const reportItems = document.querySelectorAll('.report-item');
+
+      reportItems.forEach(item => {
+          const barrio = item.querySelector('span:nth-child(1)').textContent.toLowerCase();
+          if (barrio.includes(filter)) {
+              item.style.display = ''; // Mostrar el reporte
+          } else {
+              item.style.display = 'none'; // Ocultar el reporte
+          }
+      });
+  }
+</script>
+</body>
+
+<style th:inline="css">
+  /* Estilos base para los badges */
+        .estado-badge,
+        .valoracion-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 2px;
+            font-family: Arial, sans-serif;
+            margin-left: 4px;
+        }
+
+        /* Estados */
+        .estado-badge[data-estado="EN_PROCESO"] {
+            background-color: #19afeb;
+            color: #000;
+        }
+
+        .estado-badge[data-estado="SIN_RESOLVER"] {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        .estado-badge[data-estado="RESUELTO"] {
+            background-color: #2cc94e;
+            color: #000;
+        }
+
+        /* Valoraciones */
+        .valoracion-badge[data-valoracion="BAJA"] {
+            background-color: #19afeb;
+            color: #fff;
+        }
+
+        .valoracion-badge[data-valoracion="MEDIA"] {
+            background-color: #2cc94e;
+            color: #fff;
+        }
+
+        .valoracion-badge[data-valoracion="ALTA"] {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        .valoracion-badge[data-valoracion="CRITICA"] {
+            background-color: #e2c314;
+            color: #fff;
+        }
+
+        /* Estilos para la alerta */
+        .alerta-item {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .alerta-item:last-child {
+            border-bottom: none;
+        }
+
+        .alerta-item strong {
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .alerta-item > div {
+            flex: 1;
+        }
+
+        .alerta-item i {
+            margin-top: 3px;
+        }
+
+        /* Espaciado entre líneas */
+        .alerta-item br {
+            margin-bottom: 8px;
+            display: block;
+            content: "";
+        }
+  /*---------------------------
+  /* Agrega estos estilos a tu sección de estilos existente */
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+  }
+
+  .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .card {
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .card-body {
+    min-height: 200px; /* Altura mínima para la card de alertas */
+  }
+
+  @media (max-width: 768px) {
+    /* Ajuste para dispositivos móviles */
+    .col-md-4, .col-md-8 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+  }
+
+  /*navbar*/
+.navbar {
+    background-color: white;
+    height: 80px;
+    margin: 20px;
+    border-radius: 16px;
+    padding: 0.5rem;
+}
+
+.navbar-brand {
+    font-size: 24px;
+    color: #009970;
+    font-weight: 500;
+    transition: 0.3s color;
+}
+
+.Registro-button {
+    background-color: #009970;
+    color: white;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: 0.3s;
+    cursor: default;
+
+
+}
+
+.Registro-button:hover {
+    background-color: #00b383;
+}
+
+.login-button {
+    background-color: #009970;
+    color: white;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: 0.3s;
+    cursor: default;
+
+}
+
+.login-button:hover {
+    background-color: #00b383;
+}
+
+.navbar-toggler {
+    border: none;
+    font-size: 1.25rem;
+}
+
+.navbar-toggler:focus,
+.btn-close:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.nav-link {
+    color: #666777;
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: black;
+}
+
+@media (min-width: 991px) {
+    .nav-link::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0%;
+        height: 2px;
+        background-color: #009970;
+        visibility: hidden;
+        transition: 0.3s ease-in-out;
+    }
+
+    .nav-link:hover::before,
+    .nav-link.active::before {
+        width: 100%;
+        visibility: visible;
+    }
+}
+
+/*Navbar fin*/
+
+/*carousel */
+.hero-section {
+    background: url(https://cdn.pixabay.com/photo/2020/03/16/16/51/colombia-4937610_1280.jpg);
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+}
+
+
+
+
+.carousel {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-top: 300px;
+}
+
+.carousel-inner img {
+    width: 100%;
+    /* La imagen ocupa todo el ancho del contenedor */
+    height: 300px;
+    /* Define la altura fija */
+    object-fit: cover;
+    /* La imagen cubrirá todo el área sin distorsionarse */
+    max-width: 100%;
+    /* Evita que la imagen se salga del contenedor */
+    max-height: 500px;
+    /* Limita la altura máxima */
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    top: 75%;
+    transform: translateY(-50%);
+    height: auto;
+    width: 5%;
+    /* Ajusta el ancho si necesitas que los botones sean más visibles */
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 100%;
+    /* Asegura que los iconos se ajusten correctamente */
+}
+
+/*carousel Fin */
+
+/*card */
+.card-body {
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.2);
+    cursor: default;
+    transition: all 400ms ease;
+}
+
+.card-body:hover {
+    box-shadow: 5px 5px 20 px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3%);
+}
+
+.card img {
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.2);
+    cursor: default;
+    transition: all 400ms ease;
+
+}
+
+
+.card img:hover {
+    box-shadow: 5px 5px 20 px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3%);
+}
+
+/*card Fin*/
+
+
+/*Foooter*/
+.container {
+    max-width: 1170px;
+    margin: auto;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+ul {
+    list-style: none;
+}
+
+.footer {
+    background-color: #24262b;
+    padding: 70px 0;
+}
+
+.footer-col {
+    width: 25%;
+    padding: 0 15px;
+}
+
+.footer-col h4 {
+    font-size: 18px;
+    color: #ffffff;
+    text-transform: capitalize;
+    margin-bottom: 35px;
+    font-weight: 500;
+    position: relative;
+}
+
+.footer-col h4::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    background-color: #e91e63;
+    height: 2px;
+    box-sizing: border-box;
+    width: 50px;
+}
+
+.footer-col ul li:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.footer-col ul li a {
+    font-size: 16px;
+    text-transform: capitalize;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 300;
+    color: #bbbbbb;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.footer-col ul li a:hover {
+    color: #ffffff;
+    padding-left: 8px;
+}
+
+.footer-col .social-links a {
+    display: inline-block;
+    height: 40px;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 0 10px 10px 0;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    color: #ffffff;
+    transition: all 0.5s ease;
+}
+
+.footer-col .social-links a:hover {
+    color: #24262b;
+    background-color: #ffffff;
+}
+
+@media(max-width: 767px) {
+    .footer-col {
+        width: 50%;
+        margin-bottom: 30px;
+    }
+}
+
+@media(max-width: 574px) {
+    .footer-col {
+        width: 100%;
+    }
+}
+
+/*Foooter Fin*/
+
+/* Estilos generales */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Estilos para cada reporte */
+.d-flex {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.3s ease;
+}
+
+.d-flex:hover {
+    background-color: #f9f9f9;
+}
+
+/* Estilos para el ícono de usuario */
+.bd-placeholder-img {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+/* Estilos para el contenido del reporte */
+.text-body-secondary {
+    flex-grow: 1;
+}
+
+.text-body-secondary strong {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.text-body-secondary span {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #666;
+}
+
+/* Espaciado entre reportes */
+.pb-3 {
+    padding-bottom: 15px;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+/* Estilos para el enlace de "All updates" */
+.small a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.small a:hover {
+    text-decoration: underline;
+}
+
+/* Efecto hover en los reportes */
+.d-flex:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+/* Ajustar el tamaño y color del ícono de usuario según su posición */
+.bd-placeholder-img:nth-child(1) rect {
+    fill: #007bff;
+}
+
+.bd-placeholder-img:nth-child(2) rect {
+    fill: #e83e8c;
+}
+
+.bd-placeholder-img:nth-child(3) rect {
+    fill: #6f42c1;
+}
+
+
+</style>
+
+</html>

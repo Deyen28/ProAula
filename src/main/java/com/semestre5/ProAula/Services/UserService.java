@@ -70,45 +70,39 @@ public class UserService {
     }
 
     public Page<User> findUsuariosPaginadosYFiltrados(String searchTerm, String searchBy, Pageable pageable) {
-        // Query para construir los criterios de filtro
-        Query filterQuery = new Query();
-        List<Criteria> criteriaList = new ArrayList<>(); // Lista para manejar múltiples criterios con OR
+        Query query = new Query(); // Query para filtros y luego para datos paginados
+        List<Criteria> orCriteriaList = new ArrayList<>();
 
         if (StringUtils.hasText(searchTerm)) {
             if ("id".equalsIgnoreCase(searchBy)) {
                 if (searchTerm.matches("[a-fA-F0-9]{24}")) { // Validar formato ObjectId
-                    filterQuery.addCriteria(Criteria.where("_id").is(searchTerm));
+                    query.addCriteria(Criteria.where("_id").is(searchTerm));
                 } else {
-                    // Si se busca por ID pero no es un formato válido, no devolver nada
-                    return new PageImpl<>(List.of(), pageable, 0);
+                    return new PageImpl<>(List.of(), pageable, 0); // ID no válido, no hay resultados
                 }
             } else if ("email".equalsIgnoreCase(searchBy)) {
-                filterQuery.addCriteria(Criteria.where("email").regex(searchTerm, "i"));
-            } else if (!StringUtils.hasText(searchBy)) { // Si searchBy está vacío, buscar en múltiples campos
+                query.addCriteria(Criteria.where("email").regex(searchTerm, "i"));
+            } else if (!StringUtils.hasText(searchBy)) { // Búsqueda general si searchBy es nulo/vacío
                 if (searchTerm.matches("[a-fA-F0-9]{24}")) {
-                    criteriaList.add(Criteria.where("_id").is(searchTerm));
+                    orCriteriaList.add(Criteria.where("_id").is(searchTerm));
                 }
-                criteriaList.add(Criteria.where("email").regex(searchTerm, "i"));
-                criteriaList.add(Criteria.where("nombre").regex(searchTerm, "i"));
-                criteriaList.add(Criteria.where("user_name").regex(searchTerm, "i"));
-                filterQuery.addCriteria(new Criteria().orOperator(criteriaList.toArray(new Criteria[0])));
+                orCriteriaList.add(Criteria.where("email").regex(searchTerm, "i"));
+                orCriteriaList.add(Criteria.where("nombre").regex(searchTerm, "i"));
+                orCriteriaList.add(Criteria.where("user_name").regex(searchTerm, "i"));
+
+                if (!orCriteriaList.isEmpty()) {
+                    query.addCriteria(new Criteria().orOperator(orCriteriaList.toArray(new Criteria[0])));
+                }
             }
-            // Si searchBy tiene un valor no reconocido y searchTerm existe, no se añaden criterios
-            // (efectivamente no se filtra por searchTerm a menos que searchBy sea válido o nulo).
         }
 
         // 1. Obtener el CONTEO TOTAL de elementos que coinciden con los filtros (SIN paginación)
-        long count = mongoTemplate.count(filterQuery, User.class);
+        long count = mongoTemplate.count(query, User.class);
 
-        // 2. Aplicar paginación y ordenación a la consulta para obtener la lista de la página actual
-        // Se crea una nueva Query para la paginación, aplicando los mismos criterios
-        Query paginatedQuery = new Query();
-        if (!filterQuery.getQueryObject().isEmpty()) { // Solo añadir criterios si existen
-            paginatedQuery.addCriteria(Criteria.where("_id").exists(true).andOperator((Collection<Criteria>) filterQuery.getQueryObject()));
-        }
-        paginatedQuery.with(pageable); // Aplicar paginación y ordenación
+        // 2. Aplicar paginación y ordenación a la MISMA query para obtener la lista de la página actual
+        query.with(pageable); // Modifica la query original añadiendo skip, limit y sort
 
-        List<User> users = mongoTemplate.find(paginatedQuery, User.class);
+        List<User> users = mongoTemplate.find(query, User.class);
 
         return new PageImpl<>(users, pageable, count);
     }

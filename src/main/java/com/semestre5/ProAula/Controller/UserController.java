@@ -1,14 +1,15 @@
 package com.semestre5.ProAula.Controller;
 
-import com.semestre5.ProAula.Model.Barrios;
-import com.semestre5.ProAula.Model.Contaminante;
-import com.semestre5.ProAula.Model.Reportes;
-import com.semestre5.ProAula.Model.User;
+import com.semestre5.ProAula.Model.*;
 
 
 import com.semestre5.ProAula.Services.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -43,6 +44,8 @@ public class UserController {
     private StorageService storageService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private InformeAlertaService informeAlertaService;
 
     @GetMapping("/registerView")
     public String mostararFormulario(Model model) {
@@ -403,6 +406,122 @@ public class UserController {
         }
         return "redirect:/user/dashboard/userEditView";
     }
+
+    @GetMapping("/reportes-publicos")
+    public String mostrarReportesPublicos(Model model,
+                                          @RequestParam(name = "reportPage", defaultValue = "0") int reportPage,
+                                          @RequestParam(name = "alertPage", defaultValue = "0") int alertPage,
+                                          @RequestParam(name = "size", defaultValue = "5") int size, // Tamaño de página
+                                          @RequestParam(name = "search", required = false) String search) {
+
+        // --- Lógica para Reportes ---
+        Pageable reportPageable = PageRequest.of(reportPage, size, Sort.by("fechaReporte").descending());
+        Page<Reportes> paginaReportes;
+
+        if (search != null && !search.trim().isEmpty()) {
+            Barrios barrioEncontrado = barriosService.listarTodosLosBarrios().stream()
+                    .filter(b -> b.getNombre().equalsIgnoreCase(search))
+                    .findFirst().orElse(null);
+
+            if (barrioEncontrado != null) {
+                paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
+                        null, false, null, null, barrioEncontrado.getId(), null, null, null, reportPageable);
+            } else {
+                // Si no se encuentra el barrio o la búsqueda es más general, obtener todos.
+                paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
+                        null, false, null, null, null, null, null, null, reportPageable);
+            }
+        } else {
+            paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
+                    null, false, null, null, null, null, null, null, reportPageable);
+        }
+
+        List<Map<String, Object>> reportesParaVista = paginaReportes.getContent().stream()
+                .map(reporte -> {
+                    Map<String, Object> datosVista = new HashMap<>();
+                    User usuario = userService.obtenerPorId(reporte.getUserId());
+                    Barrios barrio = barriosService.obtenerPorId(reporte.getBarrioId());
+
+                    datosVista.put("id", reporte.getId());
+                    datosVista.put("user", usuario != null ? usuario : new User()); // Para evitar nulls en la vista
+                    datosVista.put("userName", usuario != null ? usuario.getUser_name() : "Desconocido");
+                    datosVista.put("barrio", barrio != null ? barrio : new Barrios()); // Para evitar nulls
+                    datosVista.put("nombreBarrio", barrio != null ? barrio.getNombre() : "Desconocido");
+                    datosVista.put("direccion", reporte.getDireccion());
+                    datosVista.put("descripcion", reporte.getDescripcion());
+                    datosVista.put("fechaReporteFormatted", reporte.getFechaReporte() != null ?
+                            reporte.getFechaReporte().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A");
+                    datosVista.put("evidencia", reporte.getEvidencia());
+                    // No exponemos el objeto Reportes completo para la vista pública por simplicidad
+                    return datosVista;
+                }).collect(Collectors.toList());
+
+        model.addAttribute("reportes", reportesParaVista);
+        model.addAttribute("currentReportPage", paginaReportes.getNumber());
+        model.addAttribute("totalReportPages", paginaReportes.getTotalPages());
+
+
+        // --- Lógica para Informes de Alerta ---
+        Pageable alertPageable = PageRequest.of(alertPage, size, Sort.by("fechaCreacion").descending());
+        Page<InformeAlerta> paginaAlertas = informeAlertaService.findAll(alertPageable);
+
+        List<Map<String, Object>> alertasParaVista = paginaAlertas.getContent().stream()
+                .map(informe -> {
+                    Map<String, Object> datosAlerta = new HashMap<>();
+                    datosAlerta.put("id", informe.getId());
+                    datosAlerta.put("descripcion", informe.getDescripcion());
+                    datosAlerta.put("estado", informe.getEstado() != null ? informe.getEstado().name() : "N/A");
+                    datosAlerta.put("valoracion", informe.getValoracion() != null ? informe.getValoracion().name() : "N/A");
+                    datosAlerta.put("fechaCreacion", informe.getFechaCreacion() != null ?
+                            informe.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A");
+
+                    // Obtener nombres de barrios y contaminantes para el informe
+                    // Esto es una simplificación. Un informe podría tener múltiples reportes, y cada reporte un barrio.
+                    // Aquí asumimos que el informe está asociado a UN barrio principal (si es así en tu lógica)
+                    // o necesitarás una lógica más compleja para mostrar barrios de los reportes asociados.
+
+                    // Para los contaminantes asociados al InformeAlerta (a través de sus Reportes)
+                    List<String> nombresContaminantesDelInforme = new ArrayList<>();
+                    if (informe.getReportesIds() != null && !informe.getReportesIds().isEmpty()) {
+                        List<Reportes> reportesAsociados = informe.getReportesIds().stream()
+                                .map(reportesService::obtenerPorId)
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+
+                        // Suponiendo que un informe de alerta se asocia a un barrio a través del primer reporte (o una lógica definida)
+                        if (!reportesAsociados.isEmpty()) {
+                            Barrios barrioDelPrimerReporte = barriosService.obtenerPorId(reportesAsociados.get(0).getBarrioId());
+                            datosAlerta.put("barrioNombre", barrioDelPrimerReporte != null ? barrioDelPrimerReporte.getNombre() : "Múltiples o Desconocido");
+                        } else {
+                            datosAlerta.put("barrioNombre", "No Especificado");
+                        }
+
+
+                        nombresContaminantesDelInforme = reportesAsociados.stream()
+                                .filter(r -> r.getContaminantesIds() != null)
+                                .flatMap(r -> r.getContaminantesIds().stream())
+                                .distinct()
+                                .map(contId -> {
+                                    Contaminante c = contaminanteService.obtenerPorId(contId);
+                                    return c != null ? c.getNombre() : "ID: "+contId;
+                                })
+                                .collect(Collectors.toList());
+                    }
+                    datosAlerta.put("contaminantesNombres", nombresContaminantesDelInforme.isEmpty() ? Collections.singletonList("No especificados") : nombresContaminantesDelInforme);
+                    return datosAlerta;
+                }).collect(Collectors.toList());
+
+        model.addAttribute("informes", alertasParaVista);
+        model.addAttribute("currentAlertPage", paginaAlertas.getNumber());
+        model.addAttribute("totalAlertPages", paginaAlertas.getTotalPages());
+
+        model.addAttribute("search", search); // Para mantener el término de búsqueda en la paginación
+
+        return "reportesView"; // Nombre del nuevo archivo HTML
+    }
+
+
+
 
     // ADMIN
 

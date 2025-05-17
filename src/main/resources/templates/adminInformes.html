@@ -225,15 +225,29 @@
             .then(data => {
                 tablaBody.innerHTML = '';
                 if (data && data.length > 0) {
-                    data.forEach(r => {
+                    data.forEach(r => { // 'r' es cada objeto del array de respuesta
                         const row = tablaBody.insertRow();
-                        row.insertCell().innerHTML = `<input class="form-check-input" type="checkbox" name="reportesIds" value="${r.id}" id="sel_rep_${r.id}">`;
-                        row.insertCell().innerHTML = `<label for="sel_rep_${r.id}" class="form-check-label small">${r.id}</label>`;
+                        // Corregir aquí: acceder a r.reporte.id
+                        row.insertCell().innerHTML = `<input class="form-check-input" type="checkbox" name="reportesIds" value="${r.reporte.id}" id="sel_rep_${r.reporte.id}">`;
+                        row.insertCell().innerHTML = `<label for="sel_rep_${r.reporte.id}" class="form-check-label small">${r.reporte.id}</label>`;
+
+                        // usuarioNombre ya está en el nivel superior de 'r'
                         row.insertCell().textContent = r.usuarioNombre || 'N/A';
-                        row.insertCell().textContent = r.direccion || 'N/A';
-                        row.insertCell().textContent = r.fechaReporte ? new Date(r.fechaReporte).toLocaleDateString('es-CO') : 'N/A';
-                        row.insertCell().innerHTML = `<span class="badge bg-secondary">${r.estado || 'N/A'}</span>`;
+
+                        // Corregir aquí: acceder a r.reporte.direccion
+                        row.insertCell().textContent = r.reporte.direccion || 'N/A';
+
+                        // Corregir aquí: acceder a r.reporte.fechaReporte
+                        // Asegúrate que r.reporte.fechaReporte sea una cadena de fecha válida (ej. "YYYY-MM-DD")
+                        row.insertCell().textContent = r.reporte.fechaReporte ? new Date(r.reporte.fechaReporte).toLocaleDateString('es-CO') : 'N/A';
+
+                        // Corregir aquí: acceder a r.reporte.estado
+                        row.insertCell().innerHTML = `<span class="badge bg-secondary">${r.reporte.estado || 'N/A'}</span>`;
+
+                        // barrioNombre ya está en el nivel superior de 'r'
                         row.insertCell().textContent = r.barrioNombre || 'N/A';
+
+                        // contaminanteNombres ya está en el nivel superior de 'r'
                         row.insertCell().textContent = r.contaminanteNombres ? r.contaminanteNombres.join(', ') : 'N/A';
                     });
                 } else {

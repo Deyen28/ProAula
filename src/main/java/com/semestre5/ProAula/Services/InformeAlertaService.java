@@ -3,6 +3,8 @@ package com.semestre5.ProAula.Services;
 import com.semestre5.ProAula.Model.InformeAlerta;
 import com.semestre5.ProAula.Repository.InformeAlertaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,4 +51,7 @@ public class InformeAlertaService {
         informeAlertaRepository.deleteById(id);
     }
 
+    public Page<InformeAlerta> findAll(Pageable pageable) {
+        return informeAlertaRepository.findAll(pageable);
+    }
 }
