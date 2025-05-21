@@ -24,4 +24,4 @@ RUN ./mvnw package -DskipTests
 EXPOSE 8081
 
 # Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "target/ProAula-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
