@@ -98,7 +98,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Origen de tu frontend React (ajusta el puerto si es diferente)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000")); // O el puerto donde corra tu React
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000","https://proaula-production-43a0.up.railway.app")); // O el puerto donde corra tu React
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); // Headers comunes para API
         configuration.setAllowCredentials(true); // Importante si manejas cookies/sesiones
