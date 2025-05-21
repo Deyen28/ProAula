@@ -162,11 +162,11 @@
                   <div th:if="${reporte.evidencia}">
                     <strong>Evidencia:</strong><br>
                     <a th:href="@{/uploads/{filename}(filename=${reporte.evidencia})}" target="_blank">
-                      <img th:src="@{/uploads/{filename}(filename=${reporte.evidencia})}"
-                           alt="Evidencia del reporte"
-                           class="img-thumbnail"
-                           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                      />
+<!--                      <img th:src="@{/uploads/{filename}(filename=${reporte.evidencia})}"-->
+<!--                           alt="Evidencia del reporte"-->
+<!--                           class="img-thumbnail"-->
+<!--                           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"-->
+<!--                      />-->
                       <small class="text-muted" style="display:none;">(Ver imagen)</small>
                     </a>
                   </div>
