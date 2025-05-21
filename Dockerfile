@@ -1,27 +1,12 @@
-# Usa una imagen base de OpenJDK 21
-FROM openjdk:21-jdk-slim
-
-# Establece el directorio de trabajo dentro del contenedor
+# Etapa de construcción con Maven y JDK 21
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY . .
+RUN ./mvnw clean package -DskipTests
 
-# Copia el wrapper de Maven y el pom.xml
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
-
-# Otorga permisos de ejecución al Maven Wrapper
-RUN chmod +x ./mvnw
-
-# Descarga las dependencias del proyecto
-RUN ./mvnw dependency:go-offline -B
-
-# Copia el resto del código fuente de la aplicación
-COPY src ./src
-
-# Empaqueta la aplicación (crea el JAR en target/)
-RUN ./mvnw package -DskipTests
-
-# Expone el puerto en el que corre la aplicación
+# Etapa de ejecución con JDK 21
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8081
-
-# Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
