@@ -15,7 +15,8 @@ import java.util.UUID;
 @Service
 public class StorageService {
 
-    private final String UPLOAD_DIR = "uploads/";
+    
+    private final String UPLOAD_DIR = "/data/uploads/";
     private final Path rootLocation = Paths.get(UPLOAD_DIR);
 
     public String store(MultipartFile file) {
