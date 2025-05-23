@@ -263,7 +263,7 @@ public class AdminController {
     public String showAllReports(Model model,
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
-                                 @RequestParam(required = false) String usuarioTerm, // ID, nombre o email de usuario
+                                 @RequestParam(required = false) String usuarioTerm,
                                  @RequestParam(required = false) String contaminanteId,
                                  @RequestParam(required = false) String barrioId,
                                  @RequestParam(required = false) Reportes.EstadoReporte estadoReporte,
@@ -271,61 +271,72 @@ public class AdminController {
                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
                                  @RequestParam(defaultValue = "fechaReporte,desc") String[] sort) {
 
-        String sortField = sort[0];
-        String sortDirection = (sort.length > 1 && "asc".equalsIgnoreCase(sort[1])) ? "asc" : "desc";
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
+        System.out.println("ADMIN_REPORTS_DEBUG: Entrando a /admin/reportes (con lógica optimizada)");
+        try {
+            String sortField = sort[0];
+            String sortDirection = (sort.length > 1 && "asc".equalsIgnoreCase(sort[1])) ? "asc" : "desc";
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
 
-        List<String> userIdsCoincidentes = null;
-        boolean searchTermIsLikelyAnId = false;
+            List<String> userIdsCoincidentes = null;
+            boolean searchTermIsLikelyAnId = false;
 
-        if (StringUtils.hasText(usuarioTerm)) {
-            if (usuarioTerm.matches("[a-fA-F0-9]{24}")) { // Asumiendo formato ObjectId de Mongo
-                searchTermIsLikelyAnId = true;
-                // No necesitamos buscar, el servicio puede usarlo directamente si es un ID exacto.
-            } else {
-                // No es un ID, buscar usuarios por nombre o email
-                Page<User> usuariosEncontrados = userService.findUsuariosPaginadosYFiltrados(usuarioTerm, null, PageRequest.of(0, 50)); // Limitar resultados
-                if (!usuariosEncontrados.isEmpty()) {
-                    userIdsCoincidentes = usuariosEncontrados.getContent().stream().map(User::getId).collect(Collectors.toList());
+            if (StringUtils.hasText(usuarioTerm)) {
+                if (usuarioTerm.matches("[a-fA-F0-9]{24}")) {
+                    searchTermIsLikelyAnId = true;
                 } else {
-                    // Si no se encuentran usuarios por nombre/email, y no era un ID, no habrá resultados para este filtro.
-                    // Podríamos pasar una lista vacía para userIds, lo que resultará en 0 reportes si este es el único filtro.
-                    userIdsCoincidentes = new ArrayList<>();
+                    Page<User> usuariosEncontrados = userService.findUsuariosPaginadosYFiltrados(usuarioTerm, null, PageRequest.of(0, 50));
+                    if (!usuariosEncontrados.isEmpty()) {
+                        userIdsCoincidentes = usuariosEncontrados.getContent().stream().map(User::getId).collect(Collectors.toList());
+                    } else {
+                        userIdsCoincidentes = new ArrayList<>();
+                    }
                 }
             }
+
+            Page<Reportes> paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
+                    userIdsCoincidentes, searchTermIsLikelyAnId, usuarioTerm,
+                    contaminanteId, barrioId, estadoReporte, fechaDesde, fechaHasta, pageable
+            );
+
+            List<Map<String, Object>> reportesEnriquecidos = enriquecerListaDeReportes(paginaReportes.getContent());
+
+            model.addAttribute("paginaReportes", paginaReportes);
+            model.addAttribute("reportesParaVistaGlobal", reportesEnriquecidos);
+            model.addAttribute("currentPage", paginaReportes.getNumber());
+            model.addAttribute("totalPages", paginaReportes.getTotalPages());
+            model.addAttribute("totalItems", paginaReportes.getTotalElements());
+
+            // --- CAMBIO CRÍTICO AQUÍ ---
+            // Comenta o elimina esta línea para evitar cargar todos los usuarios:
+            // model.addAttribute("usuarios", userService.listarTodos());
+            // Si tu plantilla adminReportes.html tiene un <select> para usuarios que depende de esta lista,
+            // necesitarás comentarlo o eliminarlo también en el HTML.
+
+            // Estos pueden quedarse si las listas de contaminantes y barrios no son excesivamente grandes.
+            // Si también son enormes, considera la misma estrategia para ellos.
+            model.addAttribute("contaminantes", contaminanteService.listarTodosLosContaminantes());
+            model.addAttribute("barrios", barriosService.listarTodosLosBarrios());
+            model.addAttribute("estadosReporte", Reportes.EstadoReporte.values());
+
+            model.addAttribute("usuarioTermFiltro", usuarioTerm);
+            model.addAttribute("contaminanteIdFiltro", contaminanteId);
+            model.addAttribute("barrioIdFiltro", barrioId);
+            model.addAttribute("estadoReporteFiltro", estadoReporte);
+            model.addAttribute("fechaDesdeFiltro", fechaDesde);
+            model.addAttribute("fechaHastaFiltro", fechaHasta);
+            model.addAttribute("sortField", sortField);
+            model.addAttribute("sortDir", sortDirection);
+            model.addAttribute("reverseSortDir", sortDirection.equals("asc") ? "desc" : "asc");
+
+            System.out.println("ADMIN_REPORTS_DEBUG: Devolviendo vista adminReportes (con lógica optimizada y sin carga masiva de usuarios para filtros)");
+            return "adminReportes";
+
+        } catch (Exception e) {
+            System.err.println("ADMIN_REPORTS_EXCEPTION (con lógica optimizada): " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("errorMessage", "Error crítico al cargar reportes de admin: " + e.getMessage());
+            return "error";
         }
-
-        Page<Reportes> paginaReportes = reportesService.findAllReportesPaginadosYFiltrados(
-                userIdsCoincidentes, searchTermIsLikelyAnId, usuarioTerm, // Pasamos el término original también
-                contaminanteId, barrioId, estadoReporte, fechaDesde, fechaHasta, pageable
-        );
-
-        List<Map<String, Object>> reportesEnriquecidos = enriquecerListaDeReportes(paginaReportes.getContent());
-
-        model.addAttribute("paginaReportes", paginaReportes);
-        model.addAttribute("reportesParaVistaGlobal", reportesEnriquecidos);
-        model.addAttribute("currentPage", paginaReportes.getNumber());
-        model.addAttribute("totalPages", paginaReportes.getTotalPages());
-        model.addAttribute("totalItems", paginaReportes.getTotalElements());
-
-        // Para los filtros desplegables
-        model.addAttribute("usuarios", userService.listarTodos());
-        model.addAttribute("contaminantes", contaminanteService.listarTodosLosContaminantes());
-        model.addAttribute("barrios", barriosService.listarTodosLosBarrios());
-        model.addAttribute("estadosReporte", Reportes.EstadoReporte.values());
-
-        // Pasar parámetros de filtro y ordenación de vuelta para mantenerlos en los enlaces
-        model.addAttribute("usuarioTermFiltro", usuarioTerm);
-        model.addAttribute("contaminanteIdFiltro", contaminanteId);
-        model.addAttribute("barrioIdFiltro", barrioId);
-        model.addAttribute("estadoReporteFiltro", estadoReporte);
-        model.addAttribute("fechaDesdeFiltro", fechaDesde);
-        model.addAttribute("fechaHastaFiltro", fechaHasta);
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDirection);
-        model.addAttribute("reverseSortDir", sortDirection.equals("asc") ? "desc" : "asc");
-
-        return "adminReportes";
     }
 
     private List<Map<String, Object>> enriquecerListaDeReportes(List<Reportes> reportesDePaginaActual) {

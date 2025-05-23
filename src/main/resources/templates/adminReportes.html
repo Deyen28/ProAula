@@ -118,12 +118,6 @@
                                     <td><span th:each="cn : ${viewData.contaminanteNombres}" th:text="${cn}" class="badge bg-light text-dark me-1 border"></span></td>
                                     <td th:text="${#temporals.format(viewData.reporte.fechaReporte, 'dd/MM/yyyy')}"></td>
                                     <td>
-                                        <select class="form-select form-select-sm estado-reporte-select" th:attr="data-reporte-id=${viewData.reporte.id}">
-                                            <option th:each="estadoOpt : ${T(com.semestre5.ProAula.Model.Reportes.EstadoReporte).values()}"
-                                                    th:value="${estadoOpt}"
-                                                    th:text="${estadoOpt.name()}"
-                                                    th:selected="${estadoOpt == viewData.reporte.estado}"></option>
-                                        </select>
                                         <button class="btn btn-success btn-sm guardar-estado-btn ms-1" th:attr="data-reporte-id=${viewData.reporte.id}" style="display:none;" title="Guardar Estado"><i class="fas fa-save"></i></button>
                                     </td>
                                     <td><a th:if="${viewData.reporte.evidencia}" th:href="@{/uploads/{filename}(filename=${viewData.reporte.evidencia})}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver</a><span th:unless="${viewData.reporte.evidencia}">N/A</span></td>
