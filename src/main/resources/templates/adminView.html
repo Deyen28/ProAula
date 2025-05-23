@@ -165,12 +165,29 @@
                                 <a class="page-link" th:href="@{/admin/dashboard(page=${paginaUsuarios.number - 1}, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}">Anterior</a>
                             </li>
 
-                            <th:block th:each="i : ${#numbers.sequence(0, paginaUsuarios.totalPages - 1)}">
-                                <li class="page-item" th:if="${paginaUsuarios.totalPages > 1}" th:classappend="${i == paginaUsuarios.number ? 'active' : ''}">
-                                    <a class="page-link" th:href="@{/admin/dashboard(page=${i}, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}" th:text="${i + 1}"></a>
+                            <th:block th:with="current=${paginaUsuarios.number}, total=${paginaUsuarios.totalPages}, sideLinks=2">
+                                <li class="page-item" th:classappend="${0 == current ? 'active' : ''}" th:if="${total > 0}">
+                                    <a class="page-link" th:href="@{/admin/dashboard(page=0, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}">1</a>
+                                </li>
+
+                                <li class="page-item disabled" th:if="${current - sideLinks > 1}">
+                                    <span class="page-link">...</span>
+                                </li>
+
+                                <th:block th:each="i : ${#numbers.sequence( (current - sideLinks > 1 ? current - sideLinks : 1) , (current + sideLinks < total - 2 ? current + sideLinks : total - 2) )}">
+                                    <li class="page-item" th:if="${i != 0 && i != total -1}" th:classappend="${i == current ? 'active' : ''}">
+                                        <a class="page-link" th:href="@{/admin/dashboard(page=${i}, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}" th:text="${i + 1}"></a>
+                                    </li>
+                                </th:block>
+
+                                <li class="page-item disabled" th:if="${current + sideLinks < total - 2}">
+                                    <span class="page-link">...</span>
+                                </li>
+
+                                <li class="page-item" th:classappend="${total - 1 == current ? 'active' : ''}" th:if="${total > 1}">
+                                    <a class="page-link" th:href="@{/admin/dashboard(page=${total - 1}, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}" th:text="${total}"></a>
                                 </li>
                             </th:block>
-
                             <li class="page-item" th:classappend="${!paginaUsuarios.hasNext() ? 'disabled' : ''}">
                                 <a class="page-link" th:href="@{/admin/dashboard(page=${paginaUsuarios.number + 1}, size=${paginaUsuarios.size}, searchTerm=${searchTerm}, searchBy=${searchBy}, sort=${sortField}+','+${sortDir})}">Siguiente</a>
                             </li>
