@@ -22,10 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -331,40 +328,56 @@ public class AdminController {
         return "adminReportes";
     }
 
-    private List<Map<String, Object>> enriquecerListaDeReportes(List<Reportes> reportes) {
-        if (reportes.isEmpty()) {
-            return new ArrayList<>();
+    private List<Map<String, Object>> enriquecerListaDeReportes(List<Reportes> reportesDePaginaActual) {
+        if (reportesDePaginaActual == null || reportesDePaginaActual.isEmpty()) {
+            return Collections.emptyList();
         }
-        // Optimización: Obtener todos los IDs necesarios y luego hacer búsquedas masivas
-        List<String> userIds = reportes.stream().map(Reportes::getUserId).distinct().collect(Collectors.toList());
-        List<String> barrioIds = reportes.stream().map(Reportes::getBarrioId).distinct().collect(Collectors.toList());
-        List<String> contaminanteIds = reportes.stream()
-                .filter(r -> r.getContaminantesIds() != null)
-                .flatMap(r -> r.getContaminantesIds().stream())
+
+        // 1. Recolectar IDs únicos de la página actual de reportes
+        List<String> userIdsEnPagina = reportesDePaginaActual.stream()
+                .map(Reportes::getUserId)
+                .filter(Objects::nonNull) // Filtrar IDs nulos si es posible que existan
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<String, String> mapaNombresUsuarios = userService.listarTodos().stream()
-                .filter(u -> userIds.contains(u.getId()))
+        List<String> barrioIdsEnPagina = reportesDePaginaActual.stream()
+                .map(Reportes::getBarrioId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<String> contaminanteIdsEnPagina = reportesDePaginaActual.stream()
+                .filter(r -> r.getContaminantesIds() != null) // Asegurarse que la lista de IDs no sea nula
+                .flatMap(r -> r.getContaminantesIds().stream())
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Obtener solo las entidades necesarias usando los IDs recolectados
+        Map<String, String> mapaNombresUsuarios = userService.findUsersByIds(userIdsEnPagina).stream()
                 .collect(Collectors.toMap(User::getId, User::getUser_name, (n1, n2) -> n1));
 
-        Map<String, String> mapaNombresBarrios = barriosService.listarTodosLosBarrios().stream()
-                .filter(b -> barrioIds.contains(b.getId()))
+        Map<String, String> mapaNombresBarrios = barriosService.findBarriosByIds(barrioIdsEnPagina).stream()
                 .collect(Collectors.toMap(Barrios::getId, Barrios::getNombre, (n1, n2) -> n1));
 
-        Map<String, String> mapaNombresContaminantes = contaminanteService.listarTodosLosContaminantes().stream()
-                .filter(c -> contaminanteIds.contains(c.getId()))
+        Map<String, String> mapaNombresContaminantes = contaminanteService.findContaminantesByIds(contaminanteIdsEnPagina).stream()
                 .collect(Collectors.toMap(Contaminante::getId, Contaminante::getNombre, (n1, n2) -> n1));
 
-        return reportes.stream().map(reporte -> {
+        // 3. Enriquecer
+        return reportesDePaginaActual.stream().map(reporte -> {
             Map<String, Object> datosVista = new HashMap<>();
             datosVista.put("reporte", reporte);
-            datosVista.put("usuarioNombre", mapaNombresUsuarios.getOrDefault(reporte.getUserId(), "ID: " + reporte.getUserId()));
-            datosVista.put("barrioNombre", mapaNombresBarrios.getOrDefault(reporte.getBarrioId(), "ID: " + reporte.getBarrioId()));
-            List<String> nombresCont = reporte.getContaminantesIds() != null ?
-                    reporte.getContaminantesIds().stream()
-                            .map(id -> mapaNombresContaminantes.getOrDefault(id, "ID: " + id))
-                            .collect(Collectors.toList()) : new ArrayList<>();
+            datosVista.put("usuarioNombre", mapaNombresUsuarios.getOrDefault(reporte.getUserId(), "ID Usuario Desconocido"));
+            datosVista.put("barrioNombre", mapaNombresBarrios.getOrDefault(reporte.getBarrioId(), "ID Barrio Desconocido"));
+
+            List<String> nombresCont;
+            if (reporte.getContaminantesIds() != null) {
+                nombresCont = reporte.getContaminantesIds().stream()
+                        .map(id -> mapaNombresContaminantes.getOrDefault(id, "ID Cont. Desconocido"))
+                        .collect(Collectors.toList());
+            } else {
+                nombresCont = Collections.emptyList();
+            }
             datosVista.put("contaminanteNombres", nombresCont);
             return datosVista;
         }).collect(Collectors.toList());

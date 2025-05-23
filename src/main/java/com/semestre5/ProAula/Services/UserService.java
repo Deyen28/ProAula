@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -33,37 +34,43 @@ public class UserService {
 
 
     public User guardar(User usuario) {
-    try {
-        System.out.println("GUARDAR_USUARIO: Codificando contraseña para: " + usuario.getEmail());
-        usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
-        System.out.println("GUARDAR_USUARIO: Contraseña codificada. Intentando guardar: " + usuario.getEmail());
-        User savedUser = userRepository.save(usuario);
-        if (savedUser != null && savedUser.getId() != null) {
-            System.out.println("GUARDAR_USUARIO_EXITO: Usuario guardado con ID: " + savedUser.getId() + ", Email: " + savedUser.getEmail());
-        } else {
-            System.err.println("GUARDAR_USUARIO_ERROR: userRepository.save() devolvió null o usuario con ID null para email: " + usuario.getEmail());
+        try {
+            System.out.println("GUARDAR_USUARIO: Codificando contraseña para: " + usuario.getEmail());
+            usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+            System.out.println("GUARDAR_USUARIO: Contraseña codificada. Intentando guardar: " + usuario.getEmail());
+            User savedUser = userRepository.save(usuario);
+            if (savedUser != null && savedUser.getId() != null) {
+                System.out.println("GUARDAR_USUARIO_EXITO: Usuario guardado con ID: " + savedUser.getId() + ", Email: " + savedUser.getEmail());
+            } else {
+                System.err.println("GUARDAR_USUARIO_ERROR: userRepository.save() devolvió null o usuario con ID null para email: " + usuario.getEmail());
+            }
+            return savedUser;
+        } catch (Exception e) {
+            System.err.println("GUARDAR_USUARIO_EXCEPTION: Excepción durante userRepository.save() para " + usuario.getEmail() + ":");
+            e.printStackTrace();
+            throw e;
         }
-        return savedUser;
-    } catch (Exception e) {
-        System.err.println("GUARDAR_USUARIO_EXCEPTION: Excepción durante userRepository.save() para " + usuario.getEmail() + ":");
-        e.printStackTrace(); // ESTO IMPRIMIRÁ LA TRAZA COMPLETA EN LOS LOGS DE RAILWAY
-        throw e; // Relanzar para que el controlador o Spring maneje el error
     }
-}
+
     public User obtenerPorEmail(String email) {
         return userRepository.findByEmail(email);
     }
-
 
     public User obtenerPorId(String id) {
         return userRepository.findById(id).orElse(null);
     }
 
-
     public List<User> listarTodos() {
         return userRepository.findAll();
     }
 
+    // Nuevo método para buscar usuarios por una lista de IDs
+    public List<User> findUsersByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return userRepository.findByIdIn(ids);
+    }
 
     public User actualizarUsuario(User updatedUser) {
         if (updatedUser.getId() != null && userRepository.existsById(updatedUser.getId())) {
@@ -74,28 +81,27 @@ public class UserService {
 
     @Transactional
     public void eliminarUsuario(String userId) {
-
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("Usuario no encontrado para eliminar con ID: " + userId);
         }
         userRepository.deleteById(userId);
-        System.out.println("Usuario eliminado con ID: " + userId); // Log
+        System.out.println("Usuario eliminado con ID: " + userId);
     }
 
     public Page<User> findUsuariosPaginadosYFiltrados(String searchTerm, String searchBy, Pageable pageable) {
-        Query query = new Query(); // Query para filtros y luego para datos paginados
+        Query query = new Query();
         List<Criteria> orCriteriaList = new ArrayList<>();
 
         if (StringUtils.hasText(searchTerm)) {
             if ("id".equalsIgnoreCase(searchBy)) {
-                if (searchTerm.matches("[a-fA-F0-9]{24}")) { // Validar formato ObjectId
+                if (searchTerm.matches("[a-fA-F0-9]{24}")) {
                     query.addCriteria(Criteria.where("_id").is(searchTerm));
                 } else {
-                    return new PageImpl<>(List.of(), pageable, 0); // ID no válido, no hay resultados
+                    return new PageImpl<>(List.of(), pageable, 0);
                 }
             } else if ("email".equalsIgnoreCase(searchBy)) {
                 query.addCriteria(Criteria.where("email").regex(searchTerm, "i"));
-            } else if (!StringUtils.hasText(searchBy)) { // Búsqueda general si searchBy es nulo/vacío
+            } else if (!StringUtils.hasText(searchBy)) {
                 if (searchTerm.matches("[a-fA-F0-9]{24}")) {
                     orCriteriaList.add(Criteria.where("_id").is(searchTerm));
                 }
@@ -108,15 +114,9 @@ public class UserService {
                 }
             }
         }
-
-        // 1. Obtener el CONTEO TOTAL de elementos que coinciden con los filtros (SIN paginación)
         long count = mongoTemplate.count(query, User.class);
-
-        // 2. Aplicar paginación y ordenación a la MISMA query para obtener la lista de la página actual
-        query.with(pageable); // Modifica la query original añadiendo skip, limit y sort
-
+        query.with(pageable);
         List<User> users = mongoTemplate.find(query, User.class);
-
         return new PageImpl<>(users, pageable, count);
     }
 }
