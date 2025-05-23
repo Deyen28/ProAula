@@ -33,10 +33,23 @@ public class UserService {
 
 
     public User guardar(User usuario) {
+    try {
+        System.out.println("GUARDAR_USUARIO: Codificando contraseña para: " + usuario.getEmail());
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
-        return userRepository.save(usuario);
+        System.out.println("GUARDAR_USUARIO: Contraseña codificada. Intentando guardar: " + usuario.getEmail());
+        User savedUser = userRepository.save(usuario);
+        if (savedUser != null && savedUser.getId() != null) {
+            System.out.println("GUARDAR_USUARIO_EXITO: Usuario guardado con ID: " + savedUser.getId() + ", Email: " + savedUser.getEmail());
+        } else {
+            System.err.println("GUARDAR_USUARIO_ERROR: userRepository.save() devolvió null o usuario con ID null para email: " + usuario.getEmail());
+        }
+        return savedUser;
+    } catch (Exception e) {
+        System.err.println("GUARDAR_USUARIO_EXCEPTION: Excepción durante userRepository.save() para " + usuario.getEmail() + ":");
+        e.printStackTrace(); // ESTO IMPRIMIRÁ LA TRAZA COMPLETA EN LOS LOGS DE RAILWAY
+        throw e; // Relanzar para que el controlador o Spring maneje el error
     }
-
+}
     public User obtenerPorEmail(String email) {
         return userRepository.findByEmail(email);
     }

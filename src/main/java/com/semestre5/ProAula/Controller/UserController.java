@@ -53,11 +53,25 @@ public class UserController {
         return "registerView";
     }
     @PostMapping("/registrar")
-    public String registrar(@ModelAttribute("user") User usuario, Model model) {
+    public String registrar(@ModelAttribute("user") User usuario, Model model, RedirectAttributes redirectAttributes) {
+    try {
         usuario.setUserTipo(User.UserTipo.NORMAL);
-        userService.guardar(usuario);
+        User usuarioGuardado = userService.guardar(usuario); // Esta llamada ahora puede lanzar una excepción
+
+        // Solo redirigir con éxito si no hubo excepciones y el guardado fue confirmado
+        System.out.println("REGISTRAR_CONTROLLER: Usuario procesado por userService para: " + usuario.getEmail());
+        redirectAttributes.addFlashAttribute("successMessage", "¡Solicitud de registro procesada!"); // Cambiar mensaje si quieres
         return "redirect:/LoginView";
+
+    } catch (Exception e) {
+        System.err.println("REGISTRAR_CONTROLLER_EXCEPTION: Falló el registro para " + usuario.getEmail() + ":");
+        e.printStackTrace(); // Ver la traza en los logs de Railway
+        redirectAttributes.addFlashAttribute("errorMessage", "Error al registrar usuario: " + e.getMessage());
+        // Quédate en la vista de registro para que el usuario pueda ver el error y reintentar
+        model.addAttribute("user", usuario); // Devolver el objeto usuario para rellenar el formulario
+        return "registerView"; // Nombre de tu vista de registro
     }
+}
 
     @GetMapping("/LoginView")
     public String loginView(Model model) {
